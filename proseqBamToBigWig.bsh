@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# To get chromInfo, run the command below.  NOTE: MUST REMOVE HEADER LINE.
+twoBitInfo /gbdb/hg19/hg19.2bit chromInfo.hg19
+
+function makeBigWig {
+ for f in $FILES
+ do 
+   j=`echo $f | cut -d \. -f 1`
+   echo $j
+
+   bedtools bamtobed -i $f | awk 'BEGIN{OFS="\t"} ($5 > 0){print $0}' | \
+	awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$2,$2+1,$4,$5,$6}; ($6 == "-") {print $1,$3-1,$3,$4,$5,$6}' | gzip > $j.bed.gz
+   echo `zcat $j.bed.gz | grep "" -c`
+
+   ## Remove rRNA and reverse the strand (PRO-seq).
+   zcat $j.bed.gz | grep "rRNA" -v | grep "_" -v | \
+         awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6=="+"?"-":"+"}' | gzip > $j.nr.rs.bed.gz
+ 
+   ## Convert to wig
+   ~/bin/bedToWig $j.nr.rs.bed.gz $j
+   gzip $j*.wig
+ 
+   ## Then to bigWig
+   wigToBigWig $j\_plus.wig.gz $CHINFO $j\_plus.bw
+   wigToBigWig $j\_minus.wig.gz $CHINFO $j\_minus.bw
+
+   rm $j.nr.rs.bed.gz
+ done
+}
+
+# Convert to bigWig.
+#FILES=`ls *.bed.gz`
+FILES=$1
+CHINFO=chromInfo.hg19
+makeBigWig
+

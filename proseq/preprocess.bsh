@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+mkdir filtered
+mkdir noadapt
+
+for fastq in *.fastq.gz
+ do 
+   name=`echo $fastq | cut -d \. -f 1`
+
+   ## Trim using Illumina QC.
+   zcat $fastq | grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > filtered/$name.filt.fastq.gz
+
+   ## Trim adapters
+   cutadapt -a TGGAATTCTCGGGTGCCAAGG -z -e 0.10 --minimum-length=15 --output=noadapt/$name.na.fastq.gz filtered/$name.filt.fastq.gz
+ done
+

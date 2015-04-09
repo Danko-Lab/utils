@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+bwaindx=/local/storage/data/short_read_index/hg19/bwa.rRNA-0.7.5a-r405/hg19.rRNA
+
+## Align reads.
+for fastq in `ls noadapt/*.fastq.gz`
+ do
+  name=`echo $fastq | cut -d \. -f 1 | cut -d \/ -f 2`
+
+  ## Align using BWA.
+  bwa aln -t 32 $bwaindx $fastq > $name.sai
+  bwa samse -n 1 -f $name.sam hg19.rRNA $name.sai $fastq
+  samtools view -b -S $name.sam > $name.bam
+  samtools sort -@ 32 $name.bam $name.sort
+  rm $name.bam $name.sam
+ done
+

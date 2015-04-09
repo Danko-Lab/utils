@@ -19,7 +19,7 @@ function makeBigWig {
    zcat $scratch/$j.bed.gz | grep "rRNA" -v | grep "_" -v | \
          awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6=="+"?"-":"+"}' | gzip > $scratch/$j.nr.rs.bed.gz
    echo 'Number of mappable reads (excluding rRNA):'
-   echo `zcat $scratch/$j.bed.gz | grep "" -c`
+   echo `zcat $scratch/$j.nr.rs.bed.gz | grep "" -c`
 
    ## Convert to bedGraph ... Can't gzip these, unfortunately.
    bedtools genomecov -bg -i $scratch/$j.nr.rs.bed.gz -g $chromInfo -strand + > $scratch/$j\_plus.bedGraph

@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-mkdir filtered
+mkdir filtered 
 mkdir noadapt
 
 for fastq in *.fastq.gz

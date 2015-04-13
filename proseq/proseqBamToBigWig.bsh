@@ -23,7 +23,10 @@ function makeBigWig {
 
    ## Convert to bedGraph ... Can't gzip these, unfortunately.
    bedtools genomecov -bg -i $scratch/$j.nr.rs.bed.gz -g $chromInfo -strand + > $scratch/$j\_plus.bedGraph
-   bedtools genomecov -bg -i $scratch/$j.nr.rs.bed.gz -g $chromInfo -strand - > $scratch/$j\_minus.bedGraph
+   bedtools genomecov -bg -i $scratch/$j.nr.rs.bed.gz -g $chromInfo -strand - > $scratch/$j\_minus.noinv.bedGraph
+
+   ## Invert minus strand.
+   cat $scratch/$j\_minus.noinv.bedGraph > awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > $scratch/$j\_minus.bedGraph ## Invert read counts on the minus strand. 
 
    ## Then to bigWig
    bedGraphToBigWig $scratch/$j\_plus.bedGraph $chromInfo $j\_plus.bw

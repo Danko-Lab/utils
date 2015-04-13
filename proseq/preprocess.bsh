@@ -10,6 +10,6 @@ for fastq in *.fastq.gz
    zcat $fastq | grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > filtered/$name.filt.fastq.gz
 
    ## Trim adapters
-   cutadapt -a TGGAATTCTCGGGTGCCAAGG -z -e 0.10 --minimum-length=15 --output=noadapt/$name.na.fastq.gz filtered/$name.filt.fastq.gz
+   cutadapt -a TGGAATTCTCGGGTGCCAAGG -z -e 0.10 --minimum-length=10 --output=noadapt/$name.na.fastq.gz filtered/$name.filt.fastq.gz
  done
 

@@ -1,4 +1,4 @@
 do_analysis:
 	bash preprocess.bsh
 	bash align.bsh  
-	bash proseqBamToBigWig.bsh
+	for i in `ls *.sort.bam`; do bash proseqBamToBigWig.bsh $i; done

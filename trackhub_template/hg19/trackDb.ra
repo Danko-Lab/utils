@@ -1,0 +1,131 @@
+track procap
+compositeTrack on
+shortLabel dREG
+longLabel detection of Regulatory Elements using GRO-seq & PRO-seq (dREG)
+type bigWig
+visibility full
+priority 1
+maxHeightPixels 128:64:11
+
+track pro_cap_tap_pl
+    bigDataUrl 5048_5598_18444_H7FCVBGXX_PROcapTAP_ACAGTG_R1_plus.bw
+    shortLabel TAP Plus (+)
+    longLabel PRO-Cap TAP reads Plus (+)
+    type bigWig 0 50
+    autoScale on
+    color 197,0,11	
+    altColor 0,0,0
+    visibility full
+    priority 1
+    parent procap
+
+track pro_cap_tap_mn
+    bigDataUrl 5048_5598_18444_H7FCVBGXX_PROcapTAP_ACAGTG_R1_minus.bw
+    shortLabel TAP Minus (-)
+    longLabel PRO-Cap TAP reads Minus (-)
+    type bigWig 0 50
+    autoScale on
+    color 0,132,209
+    altColor 255,0,0
+    visibility hide
+    priority 2
+    parent procap
+
+track pro_cap_rpph_pl
+    bigDataUrl 5048_5598_18443_H7FCVBGXX_PROcapRppH_GCCAAT_R1_plus.bw
+    shortLabel RppH Plus (+)
+    longLabel PRO-Cap RppH reads Plus (+)
+    type bigWig 0 50
+    autoScale on
+    color 197,0,11	
+    altColor 0,0,0
+    visibility full
+    priority 3
+    parent procap
+
+track pro_cap_rpph_mn
+    bigDataUrl 5048_5598_18443_H7FCVBGXX_PROcapRppH_GCCAAT_R1_minus.bw
+    shortLabel RppH Minus (-)
+    longLabel PRO-Cap RppH reads Minus (-)
+    type bigWig 0 50
+    autoScale on
+    color 0,132,209
+    altColor 255,0,0
+    visibility hide
+    priority 4
+    parent procap
+
+track pro_cap_tap2_pl
+    bigDataUrl PROcap_NA38530_plus.bw
+    shortLabel TAP2 Plus (+)
+    longLabel PRO-Cap TAP2 reads Plus (+)
+    type bigWig 0 50
+    autoScale on
+    color 197,0,11
+    altColor 0,0,0
+    visibility full
+    priority 3
+    parent procap
+
+track pro_cap_tap2_mn
+    bigDataUrl PROcap_NA38530_minus.bw
+    shortLabel TAP2 Minus (-)
+    longLabel PRO-Cap TAP2 reads Minus (-)
+    type bigWig 0 50
+    autoScale on
+    color 0,132,209
+    altColor 0,0,0
+    visibility full
+    priority 3
+    parent procap
+
+track pro_seq_rpph_pl_J
+    bigDataUrl 5048_5598_18445_H7FCVBGXX_JurkatRppH_ATCACG_R1_plus.bw
+    shortLabel PRO-seq Jurkat RppH Plus (+)
+    longLabel PRO-seq RppH reads Plus (+)
+    type bigWig 0 50
+    autoScale on
+    color 197,0,11
+    altColor 0,0,0
+    visibility full
+    priority 5
+    parent procap
+
+track pro_seq_rpph_mn_J
+    bigDataUrl 5048_5598_18445_H7FCVBGXX_JurkatRppH_ATCACG_R1_minus.bw
+    shortLabel PRO-seq Jurkat RppH Minus (-)
+    longLabel PRO-seq RppH reads Minus (-)
+    type bigWig 0 50
+    autoScale on
+    color 0,132,209
+    altColor 255,0,0
+    visibility hide
+    priority 6
+    parent procap
+
+
+track pro_seq_tap_pl_J
+    bigDataUrl J-U_plus.bw
+    shortLabel PRO-seq Jurkat TAP Plus (+)
+    longLabel PRO-seq TAP reads Plus (+)
+    type bigWig 0 50
+    autoScale on
+    color 197,0,11
+    altColor 0,0,0
+    visibility full
+    priority 7
+    parent procap
+
+track pro_seq_tap_mn_J
+    bigDataUrl J-U_minus.bw
+    shortLabel PRO-seq Jurkat TAP Minus (-)
+    longLabel PRO-seq TAP reads Minus (-)
+    type bigWig 0 50
+    autoScale on
+    color 0,132,209
+    altColor 255,0,0
+    visibility hide
+    priority 8
+    parent procap
+
+

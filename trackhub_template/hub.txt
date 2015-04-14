@@ -1,0 +1,6 @@
+hub MCF7_tam_res_subclones
+shortLabel Tamoxifen Resistence Subclones
+longLabel PRO-seq in Tamoxifen Resistence Subclones
+genomesFile genomes.txt
+email dankoc:AT:gmail.com
+descriptionUrl ucscHub.html

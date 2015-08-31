@@ -1,7 +1,7 @@
-Danko lab pipeline for PRO-seq alignment/ QC.
+Danko lab template for PRO-seq alignment/ QC.
 =============================================
 
-This pipeline is intended for use with data from the standard PRO-seq protocol.  Note that the recommended steps are slightly different for GRO-seq
+This pipeline is intended for use with data from the standard PRO-seq protocol.  Note that the recommended steps are slightly different for GRO-seq.
 
 Dependencies: 
 -------------

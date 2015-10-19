@@ -1,0 +1,107 @@
+#!/usr/bin/bash
+#
+while test $# -gt 0; do
+        case "$1" in
+                -h|--help)
+                        echo "Preprocesses and aligns PRO-seq data."
+			echo ""
+			echo "Takes *.fastq.gz in the current working directory as input and writes"
+			echo " BAM and bedGraph files to the current working directory as output."
+			echo ""
+                        echo "bash proseqMapper.bsh [options] [files]"
+                        echo " "
+                        echo "options:"
+                        echo "-h, --help                show brief help."
+                        echo "-i, --bwa-index=PATH      path to the BWA index of the target genome (i.e., bwa index)."
+			echo "-c, --chrom-info=PATH     location of the chromInfo table."
+			echo "-t, --tmp=PATH            path to a temporary storage directory."
+                        echo "-o, --output-dir=DIR      specify a directory to store output in."
+                        exit 0
+                        ;;
+                -i)
+                        shift
+                        if test $# -gt 0; then
+                                export BWAIDX=$1
+                        else
+                                echo "no folder specified"
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --bwa-index*)
+                        export BWAIDX=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -t)
+                        shift
+                        if test $# -gt 0; then
+                                export TMPDIR=$1
+                        else
+                                echo "no temp folder specified"
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --tmp*)
+                        export TMPDIR=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -c)
+                        shift
+                        if test $# -gt 0; then
+                                export CHINFO=$1
+                        else
+                                echo "no BWA index file specified"
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --chrom-info*)
+                        export CHINFO=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -o)
+                        shift
+                        if test $# -gt 0; then
+                                export OUTPUT=$1
+                        else
+                                echo "no output dir specified"
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --output-dir*)
+                        export OUTPUT=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                *)
+                        break
+                        ;;
+        esac
+done
+
+## CHECK ARGUMENTS.
+if [ -z "$BWAIDX" ]; then
+	echo "--bwa-index is required."
+	echo " use bash proseqMapper.bsh --help."
+	exit 1
+fi
+if [ -z "$CHINFO" ]; then
+        echo "--chrom-info is required."
+        echo " use bash proseqMapper.bsh --help."
+        exit 1
+fi
+
+## Print out 
+echo "Pre-processing and aligning PRO-seq data ..." 
+echo "bwa index    $BWAIDX"
+echo "chromInfo    $CHINFO"
+echo "temp folder  $TMPDIR"
+echo "output-dir   $OUTPUT"
+
+## DOIT!
+#bash preprocess.bsh /workdir
+#bash align.bsh  /local/storage/data/short_read_index/hg19/bwa.rRNA-0.7.5a-r405/hg19.rRNA /workdir
+#for i in `ls *.sort.bam`; do bash proseqBamToBigWig.bsh $i /local/storage/data/hg19/hg19.chromInfo /workdir; done
+
+

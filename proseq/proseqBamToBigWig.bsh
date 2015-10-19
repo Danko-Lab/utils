@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # To get chromInfo, run the command below.  NOTE: MUST REMOVE HEADER LINE.
-chromInfo=/local/storage/data/hg19/hg19.chromInfo
-scratch=/workdir
+chromInfo=$2 #/local/storage/data/hg19/hg19.chromInfo
+scratch=$3   #/workdir
 
 function makeBigWig {
  for f in $FILES
@@ -39,6 +39,5 @@ function makeBigWig {
 # Convert to bigWig.
 #FILES=`ls *.bed.gz`
 FILES=$1
-CHINFO=chromInfo.hg19
 makeBigWig
 

@@ -7,7 +7,7 @@ scratch=$3   #/workdir
 function makeBigWig {
  for f in $FILES
  do
-   j=`echo $f | cut -d \. -f 1`
+   j=`echo $f | awk -F"/" '{print $NF}' | cut -d \. -f 1`
    echo $j
 
    bedtools bamtobed -i $f | awk 'BEGIN{OFS="\t"} ($5 > 0){print $0}' | \

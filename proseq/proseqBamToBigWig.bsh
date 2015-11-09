@@ -27,10 +27,16 @@ function makeBigWig {
 
    ## Invert minus strand.
    cat $scratch/$j\_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > $scratch/$j\_minus.bedGraph ## Invert read counts on the minus strand. 
+   
+   ## sort 
+   LC_COLLATE=C sort -k1,1 -k2,2n $scratch/$j\_plus.bedGraph \
+   > $scratch/$j\_plus.sorted.bedGraph
+   LC_COLLATE=C sort -k1,1 -k2,2n $scratch/$j\_minus.bedGraph \
+   > $scratch/$j\_minus.sorted.bedGraph
 
    ## Then to bigWig
-   bedGraphToBigWig $scratch/$j\_plus.bedGraph $chromInfo $j\_plus.bw
-   bedGraphToBigWig $scratch/$j\_minus.bedGraph $chromInfo $j\_minus.bw
+   bedGraphToBigWig $scratch/$j\_plus.sorted.bedGraph $chromInfo $j\_plus.bw
+   bedGraphToBigWig $scratch/$j\_minus.sorted.bedGraph $chromInfo $j\_minus.bw
  
    rm $scratch/$j.nr.rs.bed.gz $scratch/$j.bed.gz $scratch/$j*.bedGraph
  done

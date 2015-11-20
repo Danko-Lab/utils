@@ -1,0 +1,3 @@
+[submodule "proseq/qc/bed-metric"]
+	path = proseq/qc/bed-metric
+	url = https://github.com/Danko-Lab/bed-metric

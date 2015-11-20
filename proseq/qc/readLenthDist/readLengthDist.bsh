@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+zcat $1 | perl getReadLen.pl > $1.lenHist
+R --no-save --args $1.lenHist $1 < writeHistogram.R
+rm $1.lenHist

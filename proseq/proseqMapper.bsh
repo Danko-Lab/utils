@@ -3,10 +3,11 @@
 while test $# -gt 0; do
         case "$1" in
                 -h|--help)
-                        echo "Preprocesses and aligns PRO-seq data."
+			echo ""
+			echo "Preprocesses and aligns PRO-seq data."
 			echo ""
 			echo "Takes *.fastq.gz in the current working directory as input and writes"
-			echo " BAM and bedGraph files to the current working directory as output."
+			echo "BAM and bedGraph files to the current working directory as output."
 			echo ""
                         echo "bash proseqMapper.bsh [options] [files]"
                         echo " "
@@ -100,8 +101,8 @@ echo "temp folder  $TMPDIR"
 echo "output-dir   $OUTPUT"
 
 ## DOIT!
-#bash preprocess.bsh /workdir
-#bash align.bsh  /local/storage/data/short_read_index/hg19/bwa.rRNA-0.7.5a-r405/hg19.rRNA /workdir
-#for i in `ls *.sort.bam`; do bash proseqBamToBigWig.bsh $i /local/storage/data/hg19/hg19.chromInfo /workdir; done
+bash preprocess.bsh /workdir
+bash align.bsh  /local/storage/data/short_read_index/hg19/bwa.rRNA-0.7.5a-r405/hg19.rRNA /workdir
+for i in `ls *.sort.bam`; do bash proseqBamToBigWig.bsh $i /local/storage/data/hg19/hg19.chromInfo /workdir; done
 
 

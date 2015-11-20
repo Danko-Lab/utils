@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+scratch=$1
+mkdir $scratch/filtered 
+mkdir $scratch/noadapt
+
+for fastq in *.fastq.gz
+ do 
+   name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1`
+
+   ## Trim using Illumina QC.
+   zcat $fastq | grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > $scratch/filtered/$name.filt.fastq.gz
+
+   ## Trim adapters, and trim quality scores to Phred scaled Q=10.
+   cutadapt -a GATCGGAAGAGCACACGTCTGAACTCCAGTCAC -z -e 0.10 -q 10 --minimum-length=20 --output=${scratch}/noadapt/$name.fastq.gz $scratch/filtered/$name.filt.fastq.gz
+ done
+

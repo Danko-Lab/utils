@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+genomeindx=$1 ### /local/storage/data/short_read_index/hg19/bwa.rRNA-0.7.5a-r405/hg19.rRNA
+fastq=$2 ## *.fastq.gz
+scratch=$3 ### /workdir
+
+## Align reads.
+#for fastq in `ls $scratch/noadapt/*.fastq.gz`
+# do
+  name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1`
+
+  ## Align using BWA.
+  ~/bin/STAR 	--runThreadN 30 \
+		--genomeDir $genomeindx \
+		--readFilesIn $fastq \
+		--readFilesCommand zcat \
+		--outFileNamePrefix $scratch/$name \
+		--outSAMtype BAM SortedByCoordinate \
+		--bamRemoveDuplicatesType UniqueIdentical \
+		--outWigType bedGraph
+# done
+

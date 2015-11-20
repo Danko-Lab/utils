@@ -15,6 +15,7 @@ while test $# -gt 0; do
                         echo "-h, --help                show brief help."
                         echo "-i, --bwa-index=PATH      path to the BWA index of the target genome (i.e., bwa index)."
 			echo "-c, --chrom-info=PATH     location of the chromInfo table."
+			echo "-q, --qc                  writes out standard QC plots."
 			echo "-t, --tmp=PATH            path to a temporary storage directory."
                         echo "-o, --output-dir=DIR      specify a directory to store output in."
                         exit 0
@@ -31,6 +32,14 @@ while test $# -gt 0; do
                         ;;
                 --bwa-index*)
                         export BWAIDX=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -q)
+                        export QC="TRUE"
+                        shift
+                        ;;
+                --qc)
+                        export QC="TRUE"
                         shift
                         ;;
                 -t)
@@ -99,10 +108,15 @@ echo "bwa index    $BWAIDX"
 echo "chromInfo    $CHINFO"
 echo "temp folder  $TMPDIR"
 echo "output-dir   $OUTPUT"
+echo "preform qc   $QC"
 
 ## DOIT!
-bash preprocess.bsh /workdir
-bash align.bsh  /local/storage/data/short_read_index/hg19/bwa.rRNA-0.7.5a-r405/hg19.rRNA /workdir
-for i in `ls *.sort.bam`; do bash proseqBamToBigWig.bsh $i /local/storage/data/hg19/hg19.chromInfo /workdir; done
+bash preprocess.bsh $TMPDIR
+bash align.bsh  $BWAIDX $TMPDIR
+for i in `ls *.sort.bam`; do bash proseqBamToBigWig.bsh $i $CHINFO $TMPDIR; done
 
+## Preofrm QC (if desired)
+if [$QC -eq "TRUE"]; then
+	bash qc.bsh
+fi
 

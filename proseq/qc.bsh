@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+scratch=$1
+
+for fastq in *.fastq.gz
+ do 
+   name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1`
+
+   bash readLengthDist.bsh ${scratch}/noadapt/$name.na.fastq.gz $name
+ done
+

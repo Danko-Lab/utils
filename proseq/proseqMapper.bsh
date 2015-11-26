@@ -180,7 +180,7 @@ for fastq in `ls $FQ_INPUT`
 
    ## Collapse reads using prinseq-lite.pl.  Remove reads not passing Illumina QC.
    if [$B6 -eq "TRUE"]; then 
-	zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> $OUTPUT/pcr_dups.txt | \
+	zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> ${OUTPUT}/pcr_dups.txt | \
 		prinseq-lite.pl -trim_left 6 -fastq stdin -out_format 3 -out_good stdout -out_bad null | \
 		grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > ${TMPDIR}/filtered/$name.filt.fastq.gz  
    else
@@ -219,8 +219,13 @@ for f in ${TMPDIR}/*.sort.bam
    echo `zcat ${TMPDIR}/$j.bed.gz | grep "" -c`
 
    ## Remove rRNA and reverse the strand (PRO-seq).
-   zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | \
+   if [$MAP5 -eq "TRUE"]; then
+   	zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
+   else 
+   	zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | \
          awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6=="+"?"-":"+"}' | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
+   fi
+
    echo 'Number of mappable reads (excluding rRNA):'
    echo `zcat ${TMPDIR}/$j.nr.rs.bed.gz | grep "" -c`
 
@@ -238,8 +243,8 @@ for f in ${TMPDIR}/*.sort.bam
    > ${TMPDIR}/$j\_minus.sorted.bedGraph
 
    ## Then to bigWig
-   bedGraphToBigWig ${TMPDIR}/$j\_plus.sorted.bedGraph ${CHINFO} $j\_plus.bw
-   bedGraphToBigWig ${TMPDIR}/$j\_minus.sorted.bedGraph ${CHINFO} $j\_minus.bw
+   bedGraphToBigWig ${TMPDIR}/$j\_plus.sorted.bedGraph ${CHINFO} ${OUTPUT}/$j\_plus.bw
+   bedGraphToBigWig ${TMPDIR}/$j\_minus.sorted.bedGraph ${CHINFO} ${OUTPUT}/$j\_minus.bw
 
    rm ${TMPDIR}/$j.nr.rs.bed.gz ${TMPDIR}/$j.bed.gz ${TMPDIR}/$j*.bedGraph
  done

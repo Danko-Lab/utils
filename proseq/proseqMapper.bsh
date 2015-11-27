@@ -29,6 +29,7 @@ while test $# -gt 0; do
                         echo "-G, --map5=TRUE|FALSE     maps the 5' end of reads, for GRO-seq [default == FALSE]"
 			echo "-b6, --barcode6		collapses unique reads and trims a 6bp barcode."
                         echo "-q, --qc                  writes out standard QC plots [COMING SOON]."
+			echo " "
                         exit 0
                         ;;
                 -i)
@@ -64,7 +65,7 @@ while test $# -gt 0; do
                         if test $# -gt 0; then
                                 export FQ_INPUT=$1
                         else
-                                echo "no input prefix specified.  Using '*.fastq.gz'."
+                                echo "no input prefix specified."
                                 exit 1
                         fi
                         shift
@@ -78,7 +79,7 @@ while test $# -gt 0; do
                         if test $# -gt 0; then
                                 export TMPDIR=$1
                         else
-                                echo "no temp folder specified"
+                                echo "no temp folder specified."
                                 exit 1
                         fi
                         shift
@@ -92,7 +93,7 @@ while test $# -gt 0; do
                         if test $# -gt 0; then
                                 export OUTPUT=$1
                         else
-                                echo "no output dir specified"
+                                echo "no output dir specified."
                                 exit 1
                         fi
                         shift
@@ -142,6 +143,10 @@ if [ -z "$CHINFO" ]; then
         echo " use bash proseqMapper.bsh --help."
         exit 1
 fi
+if [ -z "$FQ_INPUT" ]; then
+	echo "No input files specified.  Using *.fastq.gz"
+	FQ_INPUT="*.fastq.gz"
+fi
 
 # bash generate random 32 character alphanumeric string (upper and lowercase).
 TMPDIR=$TMPDIR/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -171,6 +176,8 @@ mkdir ${TMPDIR}
 
 #############################################
 ## Preprocess data.  Remove adapters.  Trim.
+echo " "
+echo "Preprocessing fastq files:"
 mkdir ${TMPDIR}/filtered
 mkdir ${TMPDIR}/noadapt
 
@@ -193,6 +200,8 @@ for fastq in `ls $FQ_INPUT`
 
 #############################################
 ## Align reads.
+echo " "
+echo "Mapping reads:"
 for fastq in `ls ${TMPDIR}/noadapt/*.fastq.gz`
  do
   name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1` ## | cut -d \/ -f 2`
@@ -208,6 +217,8 @@ for fastq in `ls ${TMPDIR}/noadapt/*.fastq.gz`
 
 #############################################
 ## Write out the bigWigs.
+echo " "
+echo "Writing bigWigs:"
 for f in ${TMPDIR}/*.sort.bam
  do
    j=`echo $f | awk -F"/" '{print $NF}' | cut -d \. -f 1`

@@ -187,7 +187,7 @@ for fastq in `ls $FQ_INPUT`
 
    ## Collapse reads using prinseq-lite.pl.  Remove reads not passing Illumina QC.
    if [$B6 -eq "TRUE"]; then 
-	zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> ${OUTPUT}/pcr_dups.txt | \
+	zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> ${OUTPUT}/$name.pcr_dups.txt | \
 		prinseq-lite.pl -trim_left 6 -fastq stdin -out_format 3 -out_good stdout -out_bad null | \
 		grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > ${TMPDIR}/filtered/$name.filt.fastq.gz  
    else
@@ -196,6 +196,11 @@ for fastq in `ls $FQ_INPUT`
 
    ## Trim adapters
    cutadapt -a TGGAATTCTCGGGTGCCAAGG -z -e 0.10 --minimum-length=10 --output=${TMPDIR}/noadapt/$name.na.fastq.gz ${TMPDIR}/filtered/$name.filt.fastq.gz
+
+   ## Compute ... if desired.
+   if [$QC -eq "TRUE"]; then 
+     zcat ${TMPDIR}/noadapt/$name.na.fastq.gz | prinseq-lite.pl -graph_stats ld,qd,de -qual_noscale -exact_only -out_bad null -out_good null -fastq stdin -graph_data ${OUTPUT}/$name.prinseq.gd
+   fi
  done
 
 #############################################

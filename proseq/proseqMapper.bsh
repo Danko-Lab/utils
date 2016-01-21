@@ -151,6 +151,9 @@ if [ -z "$OUTPUT" ]; then
         echo "No output path specified.  Using ./"
         OUTPUT="./"
 fi
+if [ -z "$TMPDIR" ]; then
+        TMPDIR="./"
+fi
 
 # bash generate random 32 character alphanumeric string (upper and lowercase).
 TMPDIR=$TMPDIR/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -190,8 +193,8 @@ for fastq in `ls $FQ_INPUT`
    name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1`
 
    ## Collapse reads using prinseq-lite.pl.  Remove reads not passing Illumina QC.
-   if [$B6 -eq "TRUE"]; then 
-	zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> ${OUTPUT}/$name.pcr_dups.txt | \
+   if ! [ -z "$B6" ]; then 
+	zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> ${OUTPUT}/pcr_dups.txt | \
 		prinseq-lite.pl -trim_left 6 -fastq stdin -out_format 3 -out_good stdout -out_bad null | \
 		grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > ${TMPDIR}/filtered/$name.filt.fastq.gz  
    else
@@ -202,7 +205,7 @@ for fastq in `ls $FQ_INPUT`
    cutadapt -a TGGAATTCTCGGGTGCCAAGG -z -e 0.10 --minimum-length=10 --output=${TMPDIR}/noadapt/$name.na.fastq.gz ${TMPDIR}/filtered/$name.filt.fastq.gz
 
    ## Compute ... if desired.
-   if [$QC -eq "TRUE"]; then 
+   if ! [ -z "$QC" ]; then 
      zcat ${TMPDIR}/noadapt/$name.na.fastq.gz | prinseq-lite.pl -graph_stats ld,qd,de -qual_noscale -exact_only -out_bad null -out_good null -fastq stdin -graph_data ${OUTPUT}/$name.prinseq.gd
    fi
  done
@@ -239,7 +242,7 @@ for f in ${TMPDIR}/*.sort.bam
    echo `zcat ${TMPDIR}/$j.bed.gz | grep "" -c`
 
    ## Remove rRNA and reverse the strand (PRO-seq).
-   if [$MAP5 -eq "TRUE"]; then
+   if ! [ -z "$MAP5" ]; then
    	zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
    else 
    	zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | \
@@ -271,8 +274,8 @@ for f in ${TMPDIR}/*.sort.bam
 
 #############################################
 ## Preofrm QC (if desired)
-if [$QC -eq "TRUE"]; then
-	bash qc.bsh
+if ! [ -z "$QC" ]; then
+	bash qc.bsh ${TMPDIR}
 fi
 
 #############################################

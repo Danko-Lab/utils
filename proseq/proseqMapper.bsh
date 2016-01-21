@@ -194,7 +194,7 @@ for fastq in `ls $FQ_INPUT`
 
    ## Collapse reads using prinseq-lite.pl.  Remove reads not passing Illumina QC.
    if ! [ -z "$B6" ]; then 
-	zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> ${OUTPUT}/pcr_dups.txt | \
+	zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> ${OUTPUT}/$name.pcr_dups.txt | \
 		prinseq-lite.pl -trim_left 6 -fastq stdin -out_format 3 -out_good stdout -out_bad null | \
 		grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > ${TMPDIR}/filtered/$name.filt.fastq.gz  
    else

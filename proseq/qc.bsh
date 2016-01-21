@@ -2,10 +2,12 @@
 scratch=$1
 
 ## Read length histogram.
-for fastq in *.fastq.gz
+echo "Analyzing read lengths after trimming adapters."
+for fastq in ${scratch}/noadapt/*.fastq.gz
  do 
    name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1`
 
-   bash readLengthDist.bsh ${scratch}/noadapt/$name.na.fastq.gz $name
+   zcat $fastq | awk '(NR % 4 == 2) { print length($0)-1 }' | R --vanilla --quiet -e 'pdf("'$name'.readLenHist.pdf"); hist(read.table("stdin")$V1, main="'$name'"); dev.off()'
  done
 
+## Stephanie's saturation plots.

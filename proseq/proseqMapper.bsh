@@ -147,6 +147,10 @@ if [ -z "$FQ_INPUT" ]; then
 	echo "No input files specified.  Using *.fastq.gz"
 	FQ_INPUT="*.fastq.gz"
 fi
+if [ -z "$OUTPUT" ]; then
+        echo "No output path specified.  Using ./"
+        OUTPUT="./"
+fi
 
 # bash generate random 32 character alphanumeric string (upper and lowercase).
 TMPDIR=$TMPDIR/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -169,7 +173,7 @@ echo "preform qc                $QC"
 echo " " 
 
 ## Exits .. for debugging.
-exit 1
+#exit 1
 
 ## DOIT!
 mkdir ${TMPDIR}

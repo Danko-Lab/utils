@@ -222,7 +222,7 @@ for fastq in `ls ${TMPDIR}/noadapt/*.fastq.gz`
   bwa aln -t 32 ${BWAIDX} $fastq > ${TMPDIR}/$name.sai
   bwa samse -n 1 -f ${TMPDIR}/$name.sam ${BWAIDX} ${TMPDIR}/$name.sai $fastq
   samtools view -b -S ${TMPDIR}/$name.sam > ${TMPDIR}/$name.bam
-  samtools sort -@ 32 ${TMPDIR}/$name.bam ${TMPDIR}/$name.sort ## Writes the sorted BAM to the output folder.
+  samtools sort -@ 32 ${TMPDIR}/$name.bam -o ${TMPDIR}/$name.sort ## Writes the sorted BAM to the output folder.
   rm ${TMPDIR}/$name.bam ${TMPDIR}/$name.sam ${TMPDIR}/$name.sai
   cp ${TMPDIR}/$name.sort.bam ${OUTPUT} ## Saves the sorted BAM in the output file.  Make this optional?
  done

@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+bwaindx=/local/storage/data/short_read_index/mm10/bwa-0.7.8-r455/mm10.fa.gz
+scratch=/workdir/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+final=/local/storage/projects/ILC2/atac_bams
+
+echo $scratch
+mkdir $scratch
+
+## Get names
+NAMES=`ls *.fastq.gz | cut -d _ -f 1,2 | sort | uniq`
+
+## Align reads.
+for name in $NAMES
+ do
+  echo $name
+
+  ## Align using BWA.
+  bwa aln -t 32 $bwaindx ${name}_R1.fastq.gz > $scratch/${name}_R1.sai
+  bwa aln -t 32 $bwaindx ${name}_R2.fastq.gz > $scratch/${name}_R2.sai
+
+  bwa sampe -n 1 -f $scratch/${name}.sam $bwaindx $scratch/${name}_R1.sai $scratch/${name}_R2.sai ${name}_R1.fastq.gz ${name}_R2.fastq.gz | samtools sort -O bam -@ 32 - > ${name}.sort.bam
+
+  rm $scratch/${name}_R1.sai $scratch/${name}_R2.sai
+
+ done
+
+cp *.bam $final

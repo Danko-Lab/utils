@@ -1,7 +1,10 @@
 #!/usr/bin/bash
 bwaindx=/local/storage/data/short_read_index/mm10/bwa-0.7.8-r455/mm10.fa.gz
+chromInfo=/local/storage/data/mm10/mm10.chromInfo
 scratch=/workdir/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+startdir=`pwd`
 final=/local/storage/projects/ILC2/atac_bams
+log=align.log
 
 echo $scratch
 mkdir $scratch
@@ -14,14 +17,51 @@ for name in $NAMES
  do
   echo $name
 
-  ## Align using BWA.
-  bwa aln -t 32 $bwaindx ${name}_R1.fastq.gz > $scratch/${name}_R1.sai
-  bwa aln -t 32 $bwaindx ${name}_R2.fastq.gz > $scratch/${name}_R2.sai
+  ## Alignment
+  bwa mem -t 32 $bwaindx ${name}_R1.fastq.gz ${name}_R2.fastq.gz | \
+	samtools view -h - > ${scratch}/${name}.tmp.bam
+  
+  ## Write a BED file and calculate uniqueness.  Note that the -bf 0x2 flag takes only properly paired reads.
+  samtools view -bf 0x2 ${scratch}/${name}.tmp.bam | bedtools bamtobed -bedpe -i stdin | awk 'BEGIN{OFS="\t"} ($8>0) {print $1,$2,$6,".",$8,$9}' | sort-bed - | gzip >  ${scratch}/${name}.bed.gz
+  python ~/bin/bed-metric/bed-metric.py ${scratch}/${name}.bed.gz --plot
 
-  bwa sampe -n 1 -f $scratch/${name}.sam $bwaindx $scratch/${name}_R1.sai $scratch/${name}_R2.sai ${name}_R1.fastq.gz ${name}_R2.fastq.gz | samtools sort -O bam -@ 32 - > ${name}.sort.bam
+  ## Sort bam and remove duplicates.
+  zcat ${scratch}/${name}.bed.gz | grep "chrM" -v | sort-bed - | uniq | gzip > ${scratch}/${name}.nodups.bed.gz
+  samtools sort ${scratch}/${name}.tmp.bam | samtools rmdup -S - - > ${scratch}/${name}.bam
+  #samtools sort ${scratch}/${name}.tmp.bam > ${scratch}/${name}.srt.bam
+  #samtools rmdup -S ${scratch}/${name}.srt.bam - > ${scratch}/${name}.bam
 
-  rm $scratch/${name}_R1.sai $scratch/${name}_R2.sai
+  ## Print read mapping stats into QC.
+  echo "$name" >> ${final}/${log}
+  samtools flagstat ${scratch}/${name}.tmp.bam >> ${final}/${log}
+  CHM=`zcat ${scratch}/${name}.nodups.bed.gz | grep "chrM" -c`
+  MAP=`zcat ${scratch}/${name}.bed.gz | grep "" -c`
+  RMDU=`zcat ${scratch}/${name}.nodups.bed.gz | grep "" -c`
+  echo "#	$name	$MAP	$CHM	$RMDU" >> ${final}/${log}
+#  rm ${scratch}/${name}.srt.bam
 
+  ## Call peaks with MACS2
+  cd ${scratch}
+  macs2 callpeak -t ${name}.bam -f BAM -g hs -n ${name} -B -q 0.01
+  bedGraphToBigWig ${name}_treat_pileup.bdg ${chromInfo} ${name}.bw
+
+  ## Call peaks with F-seq
+  #zcat ${scratch}/${name}.bed.gz > ${scratch}/${name}.tmp.bed
+  #/home/cgd24/bin/F-seq/dist~/fseq/bin/fseq -of npf ${scratch}/${name}.tmp.bed
+  #rm ${scratch}/${name}.tmp.bed
+
+  ## Call with Hotspot.
+ # /home/cgd24/bin/hotspot/hotspot-distr/hotspot-deploy/bin/hotspot -i ILC2_IL-33.tmp.bam.bed -o ILC2_IL-33.hot.out
+
+  ## Copy saved files...
+#  cp ${name}.bam $final
+  cp ${name}.bw $final
+  cp ${name}_peaks.narrowPeak $final
+  
+  ## Move back to the startdir for the next one...
+  cd ${startdir}
  done
 
-cp *.bam $final
+## Cleanup.
+#rmdir ${scratch}
+

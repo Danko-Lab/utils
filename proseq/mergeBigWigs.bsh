@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+CHINFO=/local/storage/data/canFam3/canFam3.chromInfo
+prefix=$1 # `ls *.bw | cut -d _ -f 1 | sort | uniq` ## Remove _{plus||minus}.bw
+swp=/workdir/bigwig-merge-tmp
+mkdir $swp
+
+for i in $1*.bw
+do
+ name=`echo $i | cut -d \/ -f 3 | cut -d \. -f 1`
+ echo $name
+ bigWigToBedGraph $i $swp/$name.bedGraph
+done
+
+bedtools unionbedg -i `ls ${swp}/*_plus.bedGraph` | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4+$5+$6+$7+$8+$9}' > ${swp}/${prefix}_all.plus.bedGraph
+bedtools unionbedg -i `ls ${swp}/*_minus.bedGraph` | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4+$5+$6+$7+$8+$9}' > ${swp}/${prefix}_all.minus.bedGraph
+
+bedGraphToBigWig ${swp}/${prefix}_all.plus.bedGraph $CHINFO ${prefix}_all-merge.plus.bw
+bedGraphToBigWig ${swp}/${prefix}_all.minus.bedGraph $CHINFO ${prefix}_all-merge.minus.bw
+
+rm -Rf $swp
+

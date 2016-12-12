@@ -27,7 +27,7 @@ for name in $NAMES
 
   ## Make a BAM file for peak calling in MACS.  Criteria: Sorted, MAPQ >= 5, insert size < 175 bp, exclude potential PCR duplicates.
   samtools sort ${scratch}/${name}.tmp.bam | samtools view -hf 0x2 -q 5 | \
-	awk '((substr($0,1,1) == "@") || ($9 < 175 && $9 > -175) ) {print $0}' | samtools view -bS - | \
+#	awk '((substr($0,1,1) == "@") || ($9 < 175 && $9 > -175) ) {print $0}' | samtools view -bS - | \
 	samtools rmdup -S - - > ${scratch}/${name}.bam
 
   ## Print read mapping stats into QC.

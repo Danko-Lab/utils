@@ -2,15 +2,17 @@
 bwaindx=/local/storage/data/short_read_index/mm10/bwa-0.7.8-r455/mm10.fa.gz
 chromInfo=/local/storage/data/mm10/mm10.chromInfo
 scratch=/workdir/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-startdir=`pwd`
-final=/local/storage/projects/ILC2/atac_bams
+startdir=/workdir/lw483/oshea  # `pwd`
+final=/local/storage/projects/ILC2/atac_bams/oshea/
 log=align.log
 
 echo $scratch
 mkdir $scratch
 
+cd $startdir
+
 ## Get names
-NAMES=`ls *.fastq.gz | cut -d _ -f 1,2 | sort | uniq`
+NAMES=`ls *.fastq.gz | cut -d _ -f 1,2,3,4,5 | sort | uniq`
 
 ## Align reads.
 for name in $NAMES
@@ -18,26 +20,11 @@ for name in $NAMES
   echo $name
 
   ## Alignment
-  bwa mem -t 32 $bwaindx ${name}_R1.fastq.gz ${name}_R2.fastq.gz | \
+  bwa mem -t 32 $bwaindx ${name}_1.fastq.gz ${name}_2.fastq.gz | \
 	samtools view -h - > ${scratch}/${name}.tmp.bam
-  
-  ## Write a BED file and calculate uniqueness.  Note that the -bf 0x2 flag takes only properly paired reads. Filter MAPQ >= 5.  Awk command requires insert size < 175 bp.
-  samtools view -bf 0x2 -q 5 ${scratch}/${name}.tmp.bam | bedtools bamtobed -bedpe -i stdin | awk 'BEGIN{OFS="\t"} ( ($6-$2) < 175 ) {print $1,$2,$6,".",$8,$9}' | sort-bed - | gzip >  ${scratch}/${name}.bed.gz
-  python ~/bin/bed-metric/bed-metric.py ${scratch}/${name}.bed.gz --plot
 
-  ## Make a BAM file for peak calling in MACS.  Criteria: Sorted, MAPQ >= 5, insert size < 175 bp, exclude potential PCR duplicates.
-  samtools sort ${scratch}/${name}.tmp.bam | samtools view -hf 0x2 -q 5 | \
-#	awk '((substr($0,1,1) == "@") || ($9 < 175 && $9 > -175) ) {print $0}' | samtools view -bS - | \
-	samtools rmdup -S - - > ${scratch}/${name}.bam
-
-  ## Print read mapping stats into QC.
-  zcat ${scratch}/${name}.bed.gz | grep "chrM" -v | sort-bed - | uniq | gzip > ${scratch}/${name}.nodups.bed.gz
-  echo "$name" >> ${final}/${log}
-  samtools flagstat ${scratch}/${name}.tmp.bam >> ${final}/${log}
-  CHM=`zcat ${scratch}/${name}.nodups.bed.gz | grep "chrM" -c`
-  MAP=`zcat ${scratch}/${name}.bed.gz | grep "" -c`
-  RMDU=`zcat ${scratch}/${name}.nodups.bed.gz | grep "" -c`
-  echo "#	$name	$MAP	$CHM	$RMDU" >> ${final}/${log}
+  ## Make a BAM file for peak calling in MACS.  Criteria: Sorted, MAPQ >= 5, exclude potential PCR duplicates.
+  samtools sort ${scratch}/${name}.tmp.bam | samtools rmdup -S ${scratch}/${name}.tmp.bam - | samtools view -bf 0x2 -q 5 - > ${scratch}/${name}.bam
 
   ## Call peaks with MACS2
   cd ${scratch}
@@ -47,10 +34,10 @@ for name in $NAMES
   tabix -p bed ${name}_peaks.narrowPeak.gz
 
   ## Copy saved files...
-#  cp ${name}.bam $final
+  cp ${name}.bam $final
   cp ${name}.bw $final
   cp ${name}_peaks.narrowPeak.* $final
-  
+
   ## Move back to the startdir for the next one...
   cd ${startdir}
  done
@@ -58,3 +45,4 @@ for name in $NAMES
 ## Cleanup.
 #rmdir ${scratch}
 
+ 

@@ -190,7 +190,7 @@ echo " "
 echo "Preprocessing fastq files:"
 mkdir ${TMPDIR}/noadapt
 mkdir ${TMPDIR}/nodups
-mkdir ${TMPDUR}/sep
+mkdir ${TMPDIR}/sep
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
  do
@@ -236,8 +236,7 @@ for f in ${TMPDIR}/*.sort.bam
    if ! [ -z "$MAP5" ]; then
    	zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
    else 
-   	zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | \
-         awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6=="+"?"-":"+"}' | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
+   	zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
    fi
 
    echo 'Number of mappable reads (excluding rRNA):'

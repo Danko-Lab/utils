@@ -55,8 +55,8 @@ while True:
 
 	## ID idx
 	try:
-		fastq1[r1_seq[i1:i2]].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual)
-                fastq2[r1_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual)
+		fastq1[r1_seq[i1:i2]].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+                fastq2[r1_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
 		fileidx = idxids.index(r1_seq[i1:i2])
 		counts[fileidx] += 1
 

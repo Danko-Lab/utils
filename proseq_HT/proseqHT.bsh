@@ -1,0 +1,286 @@
+#!/usr/bin/bash
+#
+while test $# -gt 0; do
+        case "$1" in
+                -h|--help)
+			echo ""
+			echo "Preprocesses and aligns PRO-seq data."
+			echo ""
+			echo "Takes *.fastq.gz in the current working directory as input and writes"
+			echo "BAM and bedGraph files to the current working directory as output."
+			echo ""
+			echo "Requirements in current working directory:"
+			echo "cutadapt 1.8.3, prinseq-lite.pl 0.20.2"
+			echo ""
+                        echo "bash proseqMapper.bsh [options] [files]"
+                        echo " "
+			echo "options:"
+			echo " "
+                        echo "To get help:"
+                        echo "-h, --help                show this brief help menu."
+			echo " "
+			echo "Required options:"
+                        echo "-i, --bwa-index=PATH      path to the BWA index of the target genome (i.e., bwa index)."
+			echo "-c, --chrom-info=PATH     location of the chromInfo table."
+			echo " "
+			echo "I/O options:"
+			echo "-I, --fastq=PREFIX	Prefix for input files."
+			echo "-T, --tmp=PATH            path to a temporary storage directory."
+                        echo "-O, --output-dir=DIR      specify a directory to store output in."
+                        echo " "
+                        echo "Optional operations:"
+                        echo "-G, --map5=TRUE|FALSE     maps the 5' end of reads, for GRO-seq [default == FALSE]"
+			echo "-b4, --barcode4		collapses unique reads and trims a 4bp barcode off both read ends."
+                        echo "-q, --qc                  writes out standard QC plots [COMING SOON]."
+			echo " "
+                        exit 0
+                        ;;
+                -i)
+                        shift
+                        if test $# -gt 0; then
+                                export BWAIDX=$1
+                        else
+                                echo "no BWA index specified"
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --bwa-index*)
+                        export BWAIDX=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -c)
+                        shift
+                        if test $# -gt 0; then
+                                export CHINFO=$1
+                        else
+                                echo "no chromInfo specified"
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --chrom-info*)
+                        export CHINFO=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -I)
+                        shift
+                        if test $# -gt 0; then
+                                export FQ_INPUT=$1
+                        else
+                                echo "no input prefix specified."
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --fastq*)
+                        export FQ_INPUT=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -T)
+                        shift
+                        if test $# -gt 0; then
+                                export TMPDIR=$1
+                        else
+                                echo "no temp folder specified."
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --tmp*)
+                        export TMPDIR=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -O)
+                        shift
+                        if test $# -gt 0; then
+                                export OUTPUT=$1
+                        else
+                                echo "no output dir specified."
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --output-dir*)
+                        export OUTPUT=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -G)
+			export MAP5="TRUE"
+                        shift
+                        ;;
+                --map5*)
+                        export MAP5="TRUE"
+                        shift
+                        ;;
+                -b6)
+                        export B6="TRUE"
+                        shift
+                        ;;
+                --barcode6)
+                        export B6="TRUE"
+                        shift
+                        ;;
+                -q)
+                        export QC="TRUE"
+                        shift
+                        ;;
+                --qc)
+                        export QC="TRUE"
+                        shift
+                        ;;
+                *)
+                        break
+                        ;;
+        esac
+done
+
+## CHECK ARGUMENTS.
+if [ -z "$BWAIDX" ]; then
+	echo "--bwa-index is required."
+	echo " use bash proseqMapper.bsh --help."
+	exit 1
+fi
+if [ -z "$CHINFO" ]; then
+        echo "--chrom-info is required."
+        echo " use bash proseqMapper.bsh --help."
+        exit 1
+fi
+if [ -z "$FQ_INPUT" ]; then
+	echo "No input files specified.  Using *.fastq.gz"
+	FQ_INPUT="*.fastq.gz"
+fi
+if [ -z "$OUTPUT" ]; then
+        echo "No output path specified.  Using ./"
+        OUTPUT="./"
+fi
+if [ -z "$TMPDIR" ]; then
+        TMPDIR="./"
+fi
+
+# bash generate random 32 character alphanumeric string (upper and lowercase).
+TMPDIR=$TMPDIR/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+
+## Print out
+echo " " 
+echo "Processing PRO-seq data ..." 
+echo " "
+echo "Input files/ paths:"
+echo "bwa index                 $BWAIDX"
+echo "chromInfo                 $CHINFO"
+echo "inpt prefix               $FQ_INPUT"
+echo "temp folder               $TMPDIR"
+echo "output-dir                $OUTPUT"
+echo " "
+echo "Optional operations:"
+echo "Map 5' ends               $MAP5"
+echo "Barcode                   $B6"
+echo "preform qc                $QC"
+echo " " 
+
+## Exits .. for debugging.
+#exit 1
+
+## DOIT!
+mkdir ${TMPDIR}
+
+#############################################
+## Preprocess data.  Remove adapters.  Trim.
+echo " "
+echo "Preprocessing fastq files:"
+mkdir ${TMPDIR}/noadapt
+mkdir ${TMPDIR}/nodups
+mkdir ${TMPDUR}/sep
+
+for fastq in `ls $FQ_INPUT`
+ do
+   name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
+
+   ## Collapse reads using prinseq-lite.pl.  Remove reads not passing Illumina QC.
+   cutadapt -a AGATCGGAAGAGCACACGTCTGAACTC -z -e 0.10 --mask-adapter --output=${TMPDIR}/noadapt/${name}_trim_R1.fastq ${name}_R1.fastq
+   cutadapt -a GATCGTCGGACTGTAGAACTCTGAACG -z -e 0.10 --mask-adapter --output=${TMPDIR}/noadapt/${name}_trim_R2.fastq ${name}_R2.fastq
+
+   ## Remove PCR duplciates.
+   prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_trim_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_trim_R2.fastq -derep 1 -trim_ns_left 3 -trim_ns_right 3 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
+
+   ## Separate into distinct fastq files.
+   python sepIndex.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name} 
+
+   ## Trim off the 5' and 3' end with prinseqlite.pl
+
+   ## Now do the alignment.
+
+ done
+
+#############################################
+## Align reads.
+echo " "
+echo "Mapping reads:"
+for fastq in `ls ${TMPDIR}/noadapt/*.fastq.gz`
+ do
+  name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1` ## | cut -d \/ -f 2`
+
+  ## Align using BWA.
+  bwa aln -t 32 ${BWAIDX} $fastq > ${TMPDIR}/$name.sai
+  bwa samse -n 1 -f ${TMPDIR}/$name.sam ${BWAIDX} ${TMPDIR}/$name.sai $fastq
+  samtools view -b -S ${TMPDIR}/$name.sam > ${TMPDIR}/$name.bam
+  samtools sort -@ 32 ${TMPDIR}/$name.bam -o ${TMPDIR}/$name.sort.bam ## Writes the sorted BAM to the output folder. # add ".bam" for new version of samtools
+  rm ${TMPDIR}/$name.bam ${TMPDIR}/$name.sam ${TMPDIR}/$name.sai
+  cp ${TMPDIR}/$name.sort.bam ${OUTPUT} ## Saves the sorted BAM in the output file.  Make this optional?
+ done
+
+#############################################
+## Write out the bigWigs.
+echo " "
+echo "Writing bigWigs:"
+for f in ${TMPDIR}/*.sort.bam
+ do
+   j=`echo $f | awk -F"/" '{print $NF}' | cut -d \. -f 1`
+   echo $j
+
+   bedtools bamtobed -i $f | awk 'BEGIN{OFS="\t"} ($5 > 0){print $0}' | \
+        awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$2,$2+1,$4,$5,$6}; ($6 == "-") {print $1,$3-1,$3,$4,$5,$6}' | gzip > ${TMPDIR}/$j.bed.gz
+   echo 'Number of mappable reads:'
+   echo `zcat ${TMPDIR}/$j.bed.gz | grep "" -c`
+
+   ## Remove rRNA and reverse the strand (PRO-seq).
+   if ! [ -z "$MAP5" ]; then
+   	zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
+   else 
+   	zcat ${TMPDIR}/$j.bed.gz | grep "rRNA" -v | grep "_" -v | \
+         awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6=="+"?"-":"+"}' | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
+   fi
+
+   echo 'Number of mappable reads (excluding rRNA):'
+   echo `zcat ${TMPDIR}/$j.nr.rs.bed.gz | grep "" -c`
+
+   ## Convert to bedGraph ... Can't gzip these, unfortunately.
+   bedtools genomecov -bg -i ${TMPDIR}/$j.nr.rs.bed.gz -g ${CHINFO} -strand + > ${TMPDIR}/$j\_plus.bedGraph
+   bedtools genomecov -bg -i ${TMPDIR}/$j.nr.rs.bed.gz -g ${CHINFO} -strand - > ${TMPDIR}/$j\_minus.noinv.bedGraph
+
+   ## Invert minus strand.
+   cat ${TMPDIR}/$j\_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${TMPDIR}/$j\_minus.bedGraph ## Invert read counts on the minus strand.
+
+   ## sort
+   LC_COLLATE=C sort -k1,1 -k2,2n ${TMPDIR}/$j\_plus.bedGraph \
+   > ${TMPDIR}/$j\_plus.sorted.bedGraph
+   LC_COLLATE=C sort -k1,1 -k2,2n ${TMPDIR}/$j\_minus.bedGraph \
+   > ${TMPDIR}/$j\_minus.sorted.bedGraph
+
+   ## Then to bigWig
+   bedGraphToBigWig ${TMPDIR}/$j\_plus.sorted.bedGraph ${CHINFO} ${OUTPUT}/$j\_plus.bw
+   bedGraphToBigWig ${TMPDIR}/$j\_minus.sorted.bedGraph ${CHINFO} ${OUTPUT}/$j\_minus.bw
+
+   rm ${TMPDIR}/$j.nr.rs.bed.gz ${TMPDIR}/$j.bed.gz ${TMPDIR}/$j*.bedGraph
+ done
+
+#############################################
+## Preofrm QC (if desired)
+if ! [ -z "$QC" ]; then
+	bash qc.bsh ${TMPDIR}
+fi
+
+#############################################
+## CLEANUP!
+#rm -Rf ${TMPDIR}
+

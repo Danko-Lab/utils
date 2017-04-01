@@ -203,10 +203,8 @@ for fastq in `ls $FQ_INPUT`
    ## Remove PCR duplciates.
    prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_trim_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_trim_R2.fastq -derep 1 -trim_ns_left 3 -trim_ns_right 3 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
 
-   ## Separate into distinct fastq files.
+   ## Separate into distinct fastq files.  Also trims off specified lengths of sequence.
    python sepIndex.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name} 
-
-   ## Trim off the 5' and 3' end with prinseqlite.pl
 
    ## Now do the alignment.
 

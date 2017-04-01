@@ -18,8 +18,12 @@ idxids    = ['ATGC', 'TCGT', 'CGAT', 'GACG', 'GCAC', 'TGCA', 'CATG', 'GTCA', 'AG
 counts    = [0] * len(idxids)
 discard   = 0
 total     = 0
+
+## Constant values.
 i1        = 4 ## Indices of barcode
 i2        = 8
+trimLeft  = 10
+trimRight = 0
 
 ## Open input fastq files.
 fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'wb') for idx in idxids}
@@ -51,8 +55,8 @@ while True:
 
 	## ID idx
 	try:
-		fastq1[r1_seq[i1:i2]].write(r1_name+r1_seq+r1_plus+r1_qual)
-                fastq2[r1_seq[i1:i2]].write(r2_name+r2_seq+r2_plus+r2_qual)
+		fastq1[r1_seq[i1:i2]].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual)
+                fastq2[r1_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual)
 		fileidx = idxids.index(r1_seq[i1:i2])
 		counts[fileidx] += 1
 

@@ -21,7 +21,7 @@ for name in $NAMES
 
   ## Alignment
   bwa mem -t 32 $bwaindx ${name}_1.fastq.gz ${name}_2.fastq.gz | \
-	samtools view -h - > ${scratch}/${name}.tmp.bam
+	samtools view -bh - > ${scratch}/${name}.tmp.bam
 
   ## Make a BAM file for peak calling in MACS.  Criteria: Sorted, MAPQ >= 5, exclude potential PCR duplicates.
   samtools sort ${scratch}/${name}.tmp.bam | samtools rmdup -S ${scratch}/${name}.tmp.bam - | samtools view -bf 0x2 -q 5 - > ${scratch}/${name}.bam

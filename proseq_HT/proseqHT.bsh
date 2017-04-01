@@ -168,7 +168,7 @@ echo " "
 echo "Input files/ paths:"
 echo "bwa index                 $BWAIDX"
 echo "chromInfo                 $CHINFO"
-echo "inpt prefix               $FQ_INPUT"
+echo "input prefix              $FQ_INPUT"
 echo "temp folder               $TMPDIR"
 echo "output-dir                $OUTPUT"
 echo " "
@@ -192,39 +192,30 @@ mkdir ${TMPDIR}/noadapt
 mkdir ${TMPDIR}/nodups
 mkdir ${TMPDUR}/sep
 
-for fastq in `ls $FQ_INPUT`
+for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
  do
-   name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
-
    ## Collapse reads using prinseq-lite.pl.  Remove reads not passing Illumina QC.
-   cutadapt -a AGATCGGAAGAGCACACGTCTGAACTC -z -e 0.10 --mask-adapter --output=${TMPDIR}/noadapt/${name}_trim_R1.fastq ${name}_R1.fastq
-   cutadapt -a GATCGTCGGACTGTAGAACTCTGAACG -z -e 0.10 --mask-adapter --output=${TMPDIR}/noadapt/${name}_trim_R2.fastq ${name}_R2.fastq
+   cutadapt -a AGATCGGAAGAGCACACGTCTGAACTC -z -e 0.10 --mask-adapter --output=${TMPDIR}/noadapt/${name}_trim_R1.fastq ${name}_R1.fastq.gz
+   cutadapt -a GATCGTCGGACTGTAGAACTCTGAACG -z -e 0.10 --mask-adapter --output=${TMPDIR}/noadapt/${name}_trim_R2.fastq ${name}_R2.fastq.gz
 
    ## Remove PCR duplciates.
-   prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_trim_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_trim_R2.fastq -derep 1 -trim_ns_left 3 -trim_ns_right 3 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
+   prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_trim_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_trim_R2.fastq -derep 1 -trim_ns_left 3 -trim_ns_right 3 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup -min_len 15 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
 
    ## Separate into distinct fastq files.  Also trims off specified lengths of sequence.
    python sepIndex.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name} 
-
-   ## Now do the alignment.
-
  done
 
 #############################################
 ## Align reads.
 echo " "
 echo "Mapping reads:"
-for fastq in `ls ${TMPDIR}/noadapt/*.fastq.gz`
+for name in `ls ${TMPDIR}/sep/*.fastq.gz | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
  do
-  name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1` ## | cut -d \/ -f 2`
-
   ## Align using BWA.
-  bwa aln -t 32 ${BWAIDX} $fastq > ${TMPDIR}/$name.sai
-  bwa samse -n 1 -f ${TMPDIR}/$name.sam ${BWAIDX} ${TMPDIR}/$name.sai $fastq
-  samtools view -b -S ${TMPDIR}/$name.sam > ${TMPDIR}/$name.bam
-  samtools sort -@ 32 ${TMPDIR}/$name.bam -o ${TMPDIR}/$name.sort.bam ## Writes the sorted BAM to the output folder. # add ".bam" for new version of samtools
-  rm ${TMPDIR}/$name.bam ${TMPDIR}/$name.sam ${TMPDIR}/$name.sai
-  cp ${TMPDIR}/$name.sort.bam ${OUTPUT} ## Saves the sorted BAM in the output file.  Make this optional?
+  bwa mem -t 32 ${BWAIDX} ${TMPDIR}/sep/${name}_R1.fastq.gz ${TMPDIR}/sep/${name}_R2.fastq.gz | \
+	samtools view -bf 0x2 -q 10 - | samtools sort -@ 32 - > ${TMPDIR}/${name}.sort.bam
+		
+  cp ${TMPDIR}/${name}.sort.bam ${OUTPUT} ## Saves the sorted BAM in the output file.  Make this optional?
  done
 
 #############################################

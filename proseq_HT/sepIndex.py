@@ -23,7 +23,7 @@ total     = 0
 i1        = 4 ## Indices of barcode
 i2        = 9
 trimLeft  = 10
-trimRight = 0
+trimRight = 4
 
 ## Open input fastq files.
 fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'wb') for idx in idxids}

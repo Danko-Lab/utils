@@ -14,14 +14,14 @@ print "Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2
 print "Output prefix: " + out_prefix
 
 ## http://stackoverflow.com/questions/29550290/how-to-open-a-list-of-files-in-python
-idxids    = ['ATGC', 'TCGT', 'CGAT', 'GACG', 'GCAC', 'TGCA', 'CATG', 'GTCA', 'AGTC', 'TACT', 'CTAG', 'GCTG']
+idxids    = ['ATGCA', 'TCGTA', 'CGATA', 'GACGA', 'GCACA', 'TGCAA', 'CATGA', 'GTCAA', 'AGTCA', 'TACTA', 'CTAGA', 'GCTGA']
 counts    = [0] * len(idxids)
 discard   = 0
 total     = 0
 
 ## Constant values.
 i1        = 4 ## Indices of barcode
-i2        = 8
+i2        = 9
 trimLeft  = 10
 trimRight = 0
 

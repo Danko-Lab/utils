@@ -60,9 +60,28 @@ while True:
 		fileidx = idxids.index(r1_seq[i1:i2])
 		counts[fileidx] += 1
 
-	except KeyError: 
-		discard += 1
-		continue
+	except (KeyError, ValueError) as e:
+		try:
+			fastq1[r1_seq[(i1-1):(i2-1)]].write(r1_name+r1_seq[(trimLeft-1):]+r1_plus+r1_qual[(trimLeft-1):])
+			fastq2[r1_seq[(i1-1):(i2-1)]].write(r2_name+r2_seq[(trimRight-1):]+r2_plus+r2_qual[(trimRight-1):])
+			fileidx = idxids.index(r1_seq[(i1-1):(i2-1)])
+			counts[fileidx] += 1
+
+		except (KeyError, ValueError) as e:
+			try:
+				obs_idx = r1_seq[i1:i2]  ## Add back likely 5-mers in the TCGTA index.
+				if obs_idx == 'CGTAG' or obs_idx == 'TGTAG' or obs_idx == 'TCGAG' or obs_idx == 'TCGTG' or obs_idx == 'TCTAG': 
+					fastq1['TCGTA'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+					fastq2['TCGTA'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
+					fileidx = idxids.index('TCGTA')
+					counts[fileidx] += 1
+
+				else:
+					discard += 1
+
+			except (KeyError, ValueError) as e:
+				discard +=1
+				continue
 
 
 ## Close

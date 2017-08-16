@@ -65,15 +65,15 @@ while True:
 
 	## Does the reverse complement of the final 4 bases of R1 equal the first 4 of R2?
 	## This code works iff adapters have already been clipped, but then should be pretty robust.
-	if revComp(r1_seq[-5:-1]) == r2_seq[:4] and revComp(r2_seq[-11:-1]) == r1_seq[:10]: ## The final character in the line is the newline character, so -5:-1.
-		r1_seq = r1_seq[:-5] + "\n"
-		r2_seq = r2_seq[:-11] + "\n"
+	#if revComp(r1_seq[-5:-1]) == r2_seq[:4] and revComp(r2_seq[-11:-1]) == r1_seq[:10]: ## The final character in the line is the newline character, so -5:-1.
+	#	r1_seq = r1_seq[:-5] + "\n"
+	#	r2_seq = r2_seq[:-11] + "\n"
 
 	##############################################
 	## Separate distinct 5' barcodes.  ID idx.
 	try:
 		fastq1[r1_seq[i1:i2]].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
-                fastq2[r1_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
+		fastq2[r1_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
 		fileidx = idxids.index(r1_seq[i1:i2])
 		counts[fileidx] += 1
 

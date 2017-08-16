@@ -194,16 +194,27 @@ mkdir ${TMPDIR}/sep
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
  do
-   ## Collapse reads using prinseq-lite.pl.  Remove reads not passing Illumina QC.
-   cutadapt -a AGATCGGAAGAGCACACGTCTGAACTC -z -e 0.10 --mask-adapter --output=${TMPDIR}/noadapt/${name}_trim_R1.fastq ${name}_R1.fastq.gz
-   cutadapt -a GATCGTCGGACTGTAGAACTCTGAACG -z -e 0.10 --mask-adapter --output=${TMPDIR}/noadapt/${name}_trim_R2.fastq ${name}_R2.fastq.gz
+  ## Remove adapter, NNNN, JJJJAG, and low quality (q=20) base from 3prime end of reads. Keep read length >=25 after trimmming
+  cutadapt -a AGATCGGAAGAGCACACGTCTGAACTC -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R1.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R1.fastq ${name}_R1.fastq.gz  
+   # remove NNNN from the 3 prime end of R1
+  cutadapt --cut -4 --minimum-length 25 ${TMPDIR}/${name}_trim_R1.fastq --output=${TMPDIR}/${name}_trim.4Nremoved_R1.fastq -q 20
+  cutadapt --minimum-length 25 ${TMPDIR}/${name}_untrim_R1.fastq --output=${TMPDIR}/${name}_q20trim_R1.fastq -q 20
+  cat ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq | paste - - - - |LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq
 
+  cutadapt -a GATCGTCGGACTGTAGAACTCTGAACG -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R2.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R2.fastq ${name}_R2.fastq.gz  
+  # remove NNNN and JJJJAG  from the 3 prime end of R2
+  cutadapt --cut -10 --minimum-length 25 ${TMPDIR}/${name}_trim_R2.fastq --output=${TMPDIR}/${name}_trim.10Nremoved_R2.fastq -q 20 
+  cutadapt --minimum-length 25 ${TMPDIR}/${name}_untrim_R2.fastq --output=${TMPDIR}/${name}_q20trim_R2.fastq -q 20
+  cat ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.10Nremoved_R2.fastq | paste - - - - | LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq
+
+   ## Collapse reads using prinseq-lite.pl.
    ## Remove PCR duplciates.
-   prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_trim_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_trim_R2.fastq -derep 1 -trim_ns_left 3 -trim_ns_right 3 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup -min_len 25 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
+   prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup -min_len 25 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
 
    ## Separate into distinct fastq files.  Also trims off specified lengths of sequence.
-#   python sepIndex.py ${TMPDIR}/noadapt/${name}_trim_R1.fastq ${TMPDIR}/noadapt/${name}_trim_R2.fastq ${TMPDIR}/sep/${name} 
+   # use the sepIndex.py without Trims 3-prime UMI and J-barcode 
    python sepIndex.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name}
+
  done
 
 ## Cleanup.

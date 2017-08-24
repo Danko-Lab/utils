@@ -45,7 +45,7 @@ while True:
 	r1_seq  = r1.readline()
 	r1_plus = r1.readline()
 	r1_qual = r1.readline()
-
+	
 	## File 2
 	r2_name = r2.readline()
 	r2_seq  = r2.readline()
@@ -114,6 +114,10 @@ for file in fastq1.values():
 
 for file in fastq2.values():
 	file.close()
+
+print "Distinct index fastq files are Separated from:"
+print "Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2
+print "Output prefix: " + out_prefix
 
 ## Print debug information
 for i in range(len(counts)): 

@@ -115,6 +115,8 @@ for file in fastq1.values():
 #for file in fastq2.values():
 #	file.close()
 
+print "Separating distinct index fastq files from SeqPrepMerged Fastq files :   " + in_fastq_R1 
+
 ## Print debug information
 for i in range(len(counts)): 
 	print str(idxids[i]) + ": " + str(counts[i]) + " of " + str(total) + "(" + str(float(counts[i])/float(total)*100) + "%)."

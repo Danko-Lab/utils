@@ -26,7 +26,7 @@ trimLeft  = 10
 trimRight = -4
 
 ## Open input fastq files.
-fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'wb') for idx in idxids}
+fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_SeqPrepMerged.fastq.gz', 'wb') for idx in idxids}
 #fastq2 = {idx: gzip.open(out_prefix+'_'+idx+'_R2.fastq.gz', 'wb') for idx in idxids}
 
 ## Read through the fastq file.

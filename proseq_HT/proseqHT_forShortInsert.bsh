@@ -199,10 +199,16 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut
   SeqPrep -L 20 -o 10 -A AGATCGGAAGAGCACACGTCTGAACTC -B GATCGTCGGACTGTAGAACTCTGAACG \
   -f ${name}_R1.fastq.gz -r ${name}_R2.fastq.gz \
   -s ${TMPDIR}/noadapt/${name}_SeqPrepMerged.fastq.gz \
-  -1 ${TMPDIR}/${name}_SeqPrep_R1.fastq.gz -2 ${TMPDIR}/${name}_SeqPrep_R2.fastq.gz #\
+  -1 ${TMPDIR}/${name}_SeqPrep_R1.fastq.gz -2 ${TMPDIR}/${name}_SeqPrep_R2.fastq.gz & #\
   #-3 ${TMPDIR}/noadapt/${name}_discarded_R1.fastq.gz -4 ${TMPDIR}/noadapt/${name}_discarded_R2.fastq.gz -E ${TMPDIR}/noadapt/${name}_alignment.txt.gz
   
-  gzip -d ${TMPDIR}/noadapt/*.fastq.gz
+  done
+
+wait
+gzip -d ${TMPDIR}/noadapt/*.fastq.gz
+
+for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
+ do
 
   ### for the reads that are not merged
   ## Remove adapter, NNNN, JJJJAG, and low quality (q=20) base from 3prime end of reads. Keep read length >=15 after trimmming
@@ -225,15 +231,21 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut
   prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup -min_len 15 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
   ## Separate into distinct fastq files.  Also trims off specified lengths of sequence.
   # use the sepIndex.py to Trims 5-prime UMI and J-barcode, but no trimming at 3 prime end. 
-  python sepIndex.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name}_NotMerged
+  python sepIndex.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name}_NotMerged &
+  
+  done
 
+for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
+ do
   ### for the reads that are Merged 
   # Remove PCR duplciates. Keep read length >=20
-  prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_SeqPrepMerged.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_SeqPrepMerged_dedup -min_len 20 2>> ${OUTPUT}/${name}.prinseq-pcrDups.gd
+  prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_SeqPrepMerged.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_SeqPrepMerged_dedup -min_len 20 2> ${OUTPUT}/${name}_SeqPrepMerged.prinseq-pcrDups.gd
   # use the sepIndex_MergedReads.py to Trims 5-prime UMI and J-barcode AND 3-prime UMI 
-  python sepIndex_MergedReads.py ${TMPDIR}/nodups/${name}_SeqPrepMerged_dedup.fastq ${TMPDIR}/sep/${name}_SeqPrepMerged
+  python sepIndex_MergedReads.py ${TMPDIR}/nodups/${name}_SeqPrepMerged_dedup.fastq ${TMPDIR}/sep/${name}_SeqPrepMerged &
 
  done
+
+wait
 
 ## Cleanup.
 #rm ${TMPDIR}/noadapt/*.fastq

@@ -196,7 +196,7 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut
  do
 
   ## SeqPrep will Remove adapter and merge the R1 and R2 reads if there is enough overlap
-  SeqPrep -L 20 -o 10 -A AGATCGGAAGAGCACACGTCTGAACTC -B GATCGTCGGACTGTAGAACTCTGAACG \
+  SeqPrep -L 20 -A AGATCGGAAGAGCACACGTCTGAACTC -B GATCGTCGGACTGTAGAACTCTGAACG \
   -f ${name}_R1.fastq.gz -r ${name}_R2.fastq.gz \
   -s ${TMPDIR}/noadapt/${name}_SeqPrepMerged.fastq.gz \
   -1 ${TMPDIR}/${name}_SeqPrep_R1.fastq.gz -2 ${TMPDIR}/${name}_SeqPrep_R2.fastq.gz & #\
@@ -321,7 +321,7 @@ for f in ${TMPDIR}/*_NotMerged.sort.bam
 
    #rm ${TMPDIR}/${j}.nr.rs.bed.gz ${TMPDIR}/${j}.bed.gz ${TMPDIR}/${j}*.bedGraph
  done
- 
+
 #############################################
 ## Preofrm QC (if desired)
 if ! [ -z "$QC" ]; then

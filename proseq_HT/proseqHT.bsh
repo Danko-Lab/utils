@@ -12,7 +12,7 @@ while test $# -gt 0; do
 			echo "Requirements in current working directory:"
 			echo "cutadapt 1.8.3, prinseq-lite.pl 0.20.2"
 			echo ""
-                        echo "bash proseqMapper.bsh [options] [files]"
+                        echo "bash proseqHT.bsh [options] [files]"
                         echo " "
 			echo "options:"
 			echo " "
@@ -192,7 +192,7 @@ mkdir ${TMPDIR}/noadapt
 mkdir ${TMPDIR}/nodups
 mkdir ${TMPDIR}/sep
 
-for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
+for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do
   ## Remove adapter, NNNN, JJJJAG, and low quality (q=20) base from 3prime end of reads. Keep read length >=15 after trimmming
   cutadapt -a AGATCGGAAGAGCACACGTCTGAACTC -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R1.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R1.fastq ${name}_R1.fastq.gz  
@@ -227,10 +227,10 @@ rm ${TMPDIR}/nodups/*.fastq
 ## Align reads.
 echo " "
 echo "Mapping reads:"
-for name in `ls ${TMPDIR}/sep/*.fastq.gz | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2- | rev | sort | uniq`
+for name in `ls ${TMPDIR}/sep/*.fastq.gz | awk -F"/" '{print $NF}' | rev | cut -d \. -f 2- | cut -d _ -f2- | rev| sort | uniq`
  do
   ## Align using BWA.
-  bwa mem -k 19 -t 32 ${BWAIDX} ${TMPDIR}/sep/${name}_R1.fastq.gz ${TMPDIR}/sep/${name}_R2.fastq.gz | \
+  bwa mem -k 10 -t 32 ${BWAIDX} ${TMPDIR}/sep/${name}_R1.fastq.gz ${TMPDIR}/sep/${name}_R2.fastq.gz | \
 	samtools view -bf 0x2 -q 10 - | samtools sort -n -@ 32 - > ${TMPDIR}/${name}.sort.bam
 		
   cp ${TMPDIR}/${name}.sort.bam ${OUTPUT} ## Saves the sorted BAM in the output file.  Make this optional?
@@ -245,7 +245,7 @@ echo " "
 echo "Writing bigWigs:"
 for f in ${TMPDIR}/*.sort.bam
  do
-   j=`echo $f | awk -F"/" '{print $NF}' | cut -d \. -f 1`
+   j=`echo $f | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3- |rev `
    echo $j > ${OUTPUT}/${j}.align.log
 
    if ! [ -z "$MAP5" ]; then ## The 5' end of the RNA is on the _R1 read.

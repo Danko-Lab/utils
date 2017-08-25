@@ -287,39 +287,39 @@ echo "Writing bigWigs:"
 for f in ${TMPDIR}/*_NotMerged.sort.bam
  do
    j=`echo $f | awk -F"/" '{print $NF}' | cut -d \. -f 1 | rev | cut -d _ -f2-|rev `
-   echo $j > ${OUTPUT}/${j}.align.log
+   echo ${j} > ${OUTPUT}/${j}.align.log
 
    if ! [ -z "$MAP5" ]; then ## The 5' end of the RNA is on the _R1 read.
-      bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/$j_NotMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$2,$2+1,$7,$8,$9}; ($9 == "-") {print $1,$3-1,$3,$7,$8,$9}' | gzip > ${TMPDIR}/$j.unsort.bed.gz
-      bedtools bamtobed -i ${TMPDIR}/$j_SeqPrepMerged.sort.bam 2> ${TMPDIR}/$j_SeqPrepMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$2,$2+1,$4,$5,$6}; ($6 == "-") {print $1,$3-1,$3,$4,$5,$6}' | gzip >> ${TMPDIR}/$j.unsort.bed.gz
+      bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/${j}_NotMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$2,$2+1,$7,$8,$9}; ($9 == "-") {print $1,$3-1,$3,$7,$8,$9}' |gzip  > ${TMPDIR}/${j}.unsort.bed.gz
+      bedtools bamtobed -i ${TMPDIR}/${j}_SeqPrepMerged.sort.bam 2> ${TMPDIR}/${j}_SeqPrepMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$2,$2+1,$4,$5,$6}; ($6 == "-") {print $1,$3-1,$3,$4,$5,$6}'|gzip  >> ${TMPDIR}/${j}.unsort.bed.gz
    else ## The 3' end of the RNA is on the _R2 read.
-      bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/$j_NotMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$6,$6+1,$7,$8,$9}; ($9 == "-") {print $1,$5-1,$5,$7,$8,$9}' | gzip > ${TMPDIR}/$j.unsort.bed.gz
-      bedtools bamtobed -i ${TMPDIR}/$j_SeqPrepMerged.sort.bam 2> ${TMPDIR}/$j_SeqPrepMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$3-1,$3,$4,$5,$6} ; ($6 == "-") {print $1,$2,$2+1,$4,$5,$6}' | gzip >> ${TMPDIR}/$j.unsort.bed.gz
+      bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/${j}_NotMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$6,$6+1,$7,$8,$9}; ($9 == "-") {print $1,$5-1,$5,$7,$8,$9}' |gzip > ${TMPDIR}/${j}.unsort.bed.gz
+      bedtools bamtobed -i ${TMPDIR}/${j}_SeqPrepMerged.sort.bam 2> ${TMPDIR}/${j}_SeqPrepMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$3-1,$3,$4,$5,$6} ; ($6 == "-") {print $1,$2,$2+1,$4,$5,$6}' |gzip >> ${TMPDIR}/${j}.unsort.bed.gz
    fi
 
-   zcat ${TMPDIR}/$j.unsort.bed.gz |LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k 1,1 -k2,2n | gzip > ${TMPDIR}/$j.bed.gz
+   zcat ${TMPDIR}/${j}.unsort.bed.gz |LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k 1,1 -k2,2n | gzip > ${TMPDIR}/${j}.bed.gz
    
    echo 'Number of mappable reads:' >> ${OUTPUT}/${j}.align.log
-   echo `zcat ${TMPDIR}/$j.bed.gz | wc -l` >> ${OUTPUT}/${j}.align.log
+   echo `zcat ${TMPDIR}/${j}.bed.gz | wc -l` >> ${OUTPUT}/${j}.align.log
 
    ## Remove rRNA and reverse the strand (PRO-seq).
-   zcat ${TMPDIR}/$j.bed.gz | grep "rRNA\|chrM" -v | grep "_" -v | sort-bed - | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
+   zcat ${TMPDIR}/${j}.bed.gz | grep "rRNA\|chrM" -v | grep "_" -v | sort-bed - | gzip > ${TMPDIR}/${j}.nr.rs.bed.gz
 
    echo 'Number of mappable reads (excluding rRNA):' >> ${OUTPUT}/${j}.align.log
-   echo `zcat ${TMPDIR}/$j.nr.rs.bed.gz | wc -l` >> ${OUTPUT}/${j}.align.log
+   echo `zcat ${TMPDIR}/${j}.nr.rs.bed.gz | wc -l` >> ${OUTPUT}/${j}.align.log
 
    ## Convert to bedGraph ... Can't gzip these, unfortunately.
-   bedtools genomecov -bg -i ${TMPDIR}/$j.nr.rs.bed.gz -g ${CHINFO} -strand + > ${TMPDIR}/$j\_plus.bedGraph
-   bedtools genomecov -bg -i ${TMPDIR}/$j.nr.rs.bed.gz -g ${CHINFO} -strand - > ${TMPDIR}/$j\_minus.noinv.bedGraph
+   bedtools genomecov -bg -i ${TMPDIR}/${j}.nr.rs.bed.gz -g ${CHINFO} -strand + > ${TMPDIR}/${j}\_plus.bedGraph
+   bedtools genomecov -bg -i ${TMPDIR}/${j}.nr.rs.bed.gz -g ${CHINFO} -strand - > ${TMPDIR}/${j}\_minus.noinv.bedGraph
 
    ## Invert minus strand.
-   cat ${TMPDIR}/$j\_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${TMPDIR}/$j\_minus.bedGraph ## Invert read counts on the minus strand.
+   cat ${TMPDIR}/${j}\_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${TMPDIR}/${j}\_minus.bedGraph ## Invert read counts on the minus strand.
 
    ## Then to bigWig
-   bedGraphToBigWig ${TMPDIR}/$j\_plus.bedGraph ${CHINFO} ${OUTPUT}/$j\_plus.bw
-   bedGraphToBigWig ${TMPDIR}/$j\_minus.bedGraph ${CHINFO} ${OUTPUT}/$j\_minus.bw
+   bedGraphToBigWig ${TMPDIR}/${j}\_plus.bedGraph ${CHINFO} ${OUTPUT}/${j}\_plus.bw
+   bedGraphToBigWig ${TMPDIR}/${j}\_minus.bedGraph ${CHINFO} ${OUTPUT}/${j}\_minus.bw
 
-   #rm ${TMPDIR}/$j.nr.rs.bed.gz ${TMPDIR}/$j.bed.gz ${TMPDIR}/$j*.bedGraph
+   #rm ${TMPDIR}/${j}.nr.rs.bed.gz ${TMPDIR}/${j}.bed.gz ${TMPDIR}/${j}*.bedGraph
  done
  
 #############################################

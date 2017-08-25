@@ -6,10 +6,10 @@ export human_chinfo=/local/storage/data/hg19/hg19.chromInfo
 export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
 export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
 
-echo 'make sure your fastq.gz files, proseqHT_forShortInsert.bsh, sepIndex_MergedReads.py, and sepIndex.py are at your current directory'
+echo 'make sure your fastq.gz files, proseqHT_forShortInsert.bsh, sepIndex_MergedReads.py, and sepIndex.py are at your current working directory'
 mkdir My_Output_dir_forShortInsert
 bash proseqHT_forShortInsert.bsh -I \*.fastq.gz -G -i $mouse_genome -c $mouse_chinfo -T ./My_Output_dir_forShortInsert/ -O ./My_Output_dir_forShortInsert/
 
-echo 'make sure your fastq.gz files, proseqHT.bsh and sepIndex.py are at your current directory'
+echo 'make sure your fastq.gz files, proseqHT.bsh and sepIndex.py are at your current working directory'
 mkdir My_Output_dir
 bash proseqHT.bsh -I \*.fastq.gz -G -i $mouse_genome -c $mouse_chinfo -T ./My_Output_dir/ -O ./My_Output_dir/

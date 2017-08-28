@@ -12,7 +12,7 @@ while test $# -gt 0; do
 			echo "Requirements in current working directory:"
 			echo "SeqPrep, cutadapt 1.8.3, prinseq-lite.pl 0.20.2 "
 			echo ""
-                        echo "bash proseqMapper.bsh [options] [files]"
+                        echo "bash proseqHT_forShortInsert.bsh [options] [files]"
                         echo " "
 			echo "options:"
 			echo " "
@@ -270,10 +270,9 @@ for name in `ls ${TMPDIR}/sep/*.fastq.gz | awk -F"/" '{print $NF}' | rev | cut -
   bwa samse ${BWAIDX} ${TMPDIR}/${name}_SeqPrepMerged.bwa_aln.sai ${TMPDIR}/sep/${name}_SeqPrepMerged.fastq.gz | \
   samtools view -b -q 10 - | samtools sort -n -@ 32 - > ${TMPDIR}/${name}_SeqPrepMerged.sort.bam &
   
-  
- rm ${TMPDIR}/${name}_SeqPrepMerged.bwa_aln.sai
  done
 wait
+rm ${TMPDIR}/*_SeqPrepMerged.bwa_aln.sai
 cp ${TMPDIR}/*.sort.bam ${OUTPUT} ## Saves the sorted BAM in the output file.  Make this optional?
 
 ## Cleanup

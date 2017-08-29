@@ -29,8 +29,9 @@ while test $# -gt 0; do
                         echo "-O, --output-dir=DIR      specify a directory to store output in."
                         echo " "
                         echo "Optional operations:"
-                        echo "-G, --map5=TRUE|FALSE     maps the 5' end of reads, for GRO-seq [default == FALSE]"
-			echo "-b4, --barcode4		collapses unique reads and trims a 4bp barcode off both read ends."
+                        echo "-G, --map5=TRUE     report the 5' end of RNA, aka 5' end of R1 reads [default == TRUE]"
+                        echo "-3, --map5=FALSE    report the 3' end of RNA, aka 5' end of R2 reads [default: report 5' end of R1]"
+			                  echo "-b4, --barcode4		collapses unique reads and trims a 4bp barcode off both read ends."
                         echo "-q, --qc                  writes out standard QC plots [COMING SOON]."
 			echo " "
                         exit 0
@@ -106,11 +107,15 @@ while test $# -gt 0; do
                         shift
                         ;;
                 -G)
-			export MAP5="TRUE"
+			                  export MAP5="TRUE"
                         shift
                         ;;
                 --map5*)
-                        export MAP5="TRUE"
+                        export MAP5=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -3)
+                        export MAP5="FALSE"
                         shift
                         ;;
                 -b6)
@@ -156,6 +161,19 @@ if [ -z "$OUTPUT" ]; then
 fi
 if [ -z "$TMPDIR" ]; then
         TMPDIR="./"
+fi
+
+if [ -z "$MAP5" ]; then
+        MAP5="TRUE"
+fi
+if [ "${MAP5}" == "TRUE" ] ; then 
+        :
+elif [ "${MAP5}" == "FALSE" ] ; then
+        :
+else
+        echo "--map5 value is incorrect."
+        echo " use bash proseqMapper.bsh --help."
+        exit 1
 fi
 
 # bash generate random 32 character alphanumeric string (upper and lowercase).
@@ -287,10 +305,12 @@ for f in ${TMPDIR}/*_NotMerged.sort.bam
    j=`echo $f | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3- | cut -d _ -f2-|rev `
    echo ${j} > ${OUTPUT}/${j}.align.log
 
-   if ! [ -z "$MAP5" ]; then ## The 5' end of the RNA is on the _R1 read.
+   ## Report the 5' end of the RNA is on the _R1 read.
+   if [ "${MAP5}" == "TRUE" ] ; then 
       bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/${j}_NotMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$2,$2+1,$7,$8,$9}; ($9 == "-") {print $1,$3-1,$3,$7,$8,$9}' |gzip  > ${TMPDIR}/${j}.unsort.bed.gz
       bedtools bamtobed -i ${TMPDIR}/${j}_SeqPrepMerged.sort.bam 2> ${TMPDIR}/${j}_SeqPrepMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$2,$2+1,$4,$5,$6}; ($6 == "-") {print $1,$3-1,$3,$4,$5,$6}'|gzip  >> ${TMPDIR}/${j}.unsort.bed.gz
-   else ## The 3' end of the RNA is on the _R2 read.
+   
+   else  ## report the 3' end of the RNA, aka the 5' end of _R2 read.
       bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/${j}_NotMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$6,$6+1,$7,$8,$9}; ($9 == "-") {print $1,$5-1,$5,$7,$8,$9}' |gzip > ${TMPDIR}/${j}.unsort.bed.gz
       bedtools bamtobed -i ${TMPDIR}/${j}_SeqPrepMerged.sort.bam 2> ${TMPDIR}/${j}_SeqPrepMerged.kill.warnings | awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$3-1,$3,$4,$5,$6} ; ($6 == "-") {print $1,$2,$2+1,$4,$5,$6}' |gzip >> ${TMPDIR}/${j}.unsort.bed.gz
    fi

@@ -20,5 +20,5 @@ In addition to the in-house scripts provided, the pipelines depend on several co
 - [ ] bedtools
 - [ ] bedGraphToBigWig (from the Kent source utilities)
 
-test the pull Please make sure you can call the bioinformatics tools from your current working directory.    
+Please make sure you can call the bioinformatics tools from your current working directory.    
 

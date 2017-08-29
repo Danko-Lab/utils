@@ -29,10 +29,8 @@ while test $# -gt 0; do
                         echo "-O, --output-dir=DIR      specify a directory to store output in."
                         echo " "
                         echo "Optional operations:"
-                        echo "-G, --map5=TRUE     report the 5' end of RNA, aka 5' end of R1 reads [default == TRUE]"
-                        echo "-3, --map5=FALSE    report the 3' end of RNA, aka 5' end of R2 reads [default: report 5' end of R1]"
-			                  echo "-b4, --barcode4		collapses unique reads and trims a 4bp barcode off both read ends."
-                        echo "-q, --qc                  writes out standard QC plots [COMING SOON]."
+                        echo "-G, --map5=TRUE     map the 5' end of RNA, aka 5' end of R1 reads [default == TRUE]"
+                        echo "-3, --map5=FALSE    map the 3' end of RNA, aka 5' end of R2 reads [default: report 5' end of R1]"
 			echo " "
                         exit 0
                         ;;
@@ -118,22 +116,6 @@ while test $# -gt 0; do
                         export MAP5="FALSE"
                         shift
                         ;;
-                -b6)
-                        export B6="TRUE"
-                        shift
-                        ;;
-                --barcode6)
-                        export B6="TRUE"
-                        shift
-                        ;;
-                -q)
-                        export QC="TRUE"
-                        shift
-                        ;;
-                --qc)
-                        export QC="TRUE"
-                        shift
-                        ;;
                 *)
                         break
                         ;;
@@ -192,8 +174,6 @@ echo "output-dir                $OUTPUT"
 echo " "
 echo "Optional operations:"
 echo "Map 5' ends               $MAP5"
-echo "Barcode                   $B6"
-echo "preform qc                $QC"
 echo " " 
 
 ## Exits .. for debugging.
@@ -341,11 +321,6 @@ for f in ${TMPDIR}/*_NotMerged.sort.bam
    rm ${TMPDIR}/${j}.nr.rs.bed.gz ${TMPDIR}/${j}.bed.gz ${TMPDIR}/${j}*.bedGraph
  done
 
-#############################################
-## Preofrm QC (if desired)
-if ! [ -z "$QC" ]; then
-	bash qc.bsh ${TMPDIR}
-fi
 
 #############################################
 ## CLEANUP!

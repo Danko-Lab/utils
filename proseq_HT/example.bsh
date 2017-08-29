@@ -8,8 +8,8 @@ export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
 
 echo 'make sure your fastq.gz files, proseqHT_forShortInsert.bsh, sepIndex_MergedReads.py, and sepIndex.py are at your current working directory'
 mkdir My_proseqHT_forShortInsert_output_dir
-bash proseqHT_forShortInsert.bsh -I \*.fastq.gz -G -i $mouse_genome -c $mouse_chinfo -T ./My_proseqHT_forShortInsert_output_dir/ -O ./My_proseqHT_forShortInsert_output_dir/
+bash proseqHT_forShortInsert.bsh -I \*.fastq.gz -i $mouse_genome -c $mouse_chinfo -T ./My_proseqHT_forShortInsert_output_dir/ -O ./My_proseqHT_forShortInsert_output_dir/
 
 echo 'make sure your fastq.gz files, proseqHT.bsh and sepIndex.py are at your current working directory'
 mkdir My_proseqHT_output_dir
-bash proseqHT.bsh -I \*.fastq.gz -G -i $mouse_genome -c $mouse_chinfo -T ./My_proseqHT_output_dir/ -O ./My_proseqHT_output_dir/
+bash proseqHT.bsh -I \*.fastq.gz -i $mouse_genome -c $mouse_chinfo -T ./My_proseqHT_output_dir/ -O ./My_proseqHT_output_dir/

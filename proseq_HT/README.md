@@ -1,4 +1,4 @@
-Danko lab template for high-throughput paired-end paired-end PRO-seq reads trimming and alignment.
+Danko lab template for high-throughput paired-end PRO-seq reads trimming and alignment.
 =============================================
 * proseqHT.bsh is a pipeline that is modified from the original proseq.bsh pipeline to process high-throughput paired-end sequencing data.
 

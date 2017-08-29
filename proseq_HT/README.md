@@ -12,6 +12,7 @@ Dependencies:
 -------------
 
 In addition to the in-house scripts provided, the pipelines depend on several common bioinformatics tools: 
+Please make sure you can call the bioinformatics tools from your current working directory
 - [ ] SeqPrep (only required for proseqHT_forShortInsert.bsh)
 - [ ] cutadapt
 - [ ] prinseq-lite.pl

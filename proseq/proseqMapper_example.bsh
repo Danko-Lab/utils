@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+
+export human_genome=/local/storage/data/short_read_index/hg19/bwa.rRNA-0.7.5a-r405/hg19.rRNA
+export human_chinfo=/local/storage/data/hg19/hg19.chromInfo
+
+export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+
+mkdir My_output_dir
+bash proseqMapper.bsh -I \*.fastq.gz -i $mouse_genome -c $mouse_chinfo -T ./My_output_dir/ -O ./My_output_dir/

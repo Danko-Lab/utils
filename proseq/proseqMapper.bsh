@@ -192,17 +192,18 @@ for fastq in `ls $FQ_INPUT`
  do
    name=`echo $fastq | awk -F"/" '{print $NF}' | cut -d \. -f 1`
 
-   ## Collapse reads using prinseq-lite.pl.  Remove reads not passing Illumina QC.
+   ## Collapse reads using prinseq-lite.pl if -b6 is given
+   ## Trim adapters using cutadapt
+   #Remove reads not passing Illumina QC? (SPC: Not sure which line do this)
    if ! [ -z "$B6" ]; then 
-	zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> ${OUTPUT}/$name.pcr_dups.txt | \
-		prinseq-lite.pl -trim_left 6 -fastq stdin -out_format 3 -out_good stdout -out_bad null | \
-		grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > ${TMPDIR}/filtered/$name.filt.fastq.gz  
+	  zcat $fastq | prinseq-lite.pl -derep 1 -fastq stdin -out_format 3 -out_good stdout -out_bad null 2> ${OUTPUT}/$name.pcr_dups.txt | \
+		prinseq-lite.pl -trim_left 6 -fastq stdin -out_format 3 -out_good stdout -out_bad null -min_len 10| gzip > ${TMPDIR}/filtered/$name.filt.fastq.gz  
+    cutadapt -a TGGAATTCTCGGGTGCCAAGG -z -e 0.10 --minimum-length=10 --output=${TMPDIR}/noadapt/$name.na.fastq.gz ${TMPDIR}/filtered/$name.filt.fastq.gz
    else
-   	zcat $fastq | grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > ${TMPDIR}/filtered/$name.filt.fastq.gz
+   	#zcat $fastq | grep -A 3 '^@.* [^:]*:N:[^:]*:' | sed '/^--$/d' | gzip > ${TMPDIR}/filtered/$name.filt.fastq.gz
+  ## Trim adapters
+    cutadapt -a TGGAATTCTCGGGTGCCAAGG -z -e 0.10 --minimum-length=10 --output=${TMPDIR}/noadapt/$name.na.fastq.gz $fastq
    fi
-
-   ## Trim adapters
-   cutadapt -a TGGAATTCTCGGGTGCCAAGG -z -e 0.10 --minimum-length=10 --output=${TMPDIR}/noadapt/$name.na.fastq.gz ${TMPDIR}/filtered/$name.filt.fastq.gz
 
    ## Compute ... if desired.
    if ! [ -z "$QC" ]; then 

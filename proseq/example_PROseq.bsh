@@ -6,5 +6,8 @@ export human_chinfo=/local/storage/data/hg19/hg19.chromInfo
 export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
 export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
 
+export dog_genome=/local/storage/data/short_read_index/canFam3/bwa.rRNA-0.7.8-r455/canFam3.rRNA.fa
+export dog_chinfo=/local/storage/data/canFam3/canFam3.chromInfo
+
 mkdir My_output_dir
 bash proseqMapper.bsh -b6 -I \*.fastq.gz -i $mouse_genome -c $mouse_chinfo -T ./My_output_dir/ -O ./My_output_dir/

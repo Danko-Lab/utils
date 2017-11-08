@@ -138,8 +138,12 @@ if [ -z "$FQ_INPUT" ]; then
 	FQ_INPUT="*.fastq.gz"
 fi
 if [ -z "$OUTPUT" ]; then
-        echo "No output path specified.  Using ./"
-        OUTPUT="./"
+        echo "No output path specified.  Using ./My_proseqHT_forShortInsert_output_dir-date"
+        now=$(date +"%m_%d_%Y")
+        OUTPUT=./My_proseqHT_forShortInsert_output_dir-${now}
+fi
+if [ ! -d $OUTPUT ]; then
+  mkdir $OUTPUT
 fi
 if [ -z "$TMPDIR" ]; then
         TMPDIR="./"
@@ -157,6 +161,7 @@ else
         echo " use bash proseqMapper.bsh --help."
         exit 1
 fi
+
 
 # bash generate random 32 character alphanumeric string (upper and lowercase).
 TMPDIR=$TMPDIR/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)

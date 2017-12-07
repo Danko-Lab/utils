@@ -20,10 +20,10 @@ discard   = 0
 total     = 0
 
 ## Constant values.
-i1        = 4 ## Indices of barcode
-i2        = 9
-trimLeft  = 10
-trimRight = 4
+i1        = 0  ## Indices of barcode
+i2        = 4 
+trimLeft  = 2 
+trimRight = 10 
 
 ## Open input fastq files.
 fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'wb') for idx in idxids}
@@ -72,21 +72,21 @@ while True:
 	##############################################
 	## Separate distinct 5' barcodes.  ID idx.
 	try:
-		fastq1[r1_seq[i1:i2]].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
-		fastq2[r1_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
-		fileidx = idxids.index(r1_seq[i1:i2])
+		fastq1[r2_seq[i1:i2]].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+		fastq2[r2_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
+		fileidx = idxids.index(r2_seq[i1:i2])
 		counts[fileidx] += 1
 
 	except (KeyError, ValueError) as e:
 		try:       ## Off by one means can remove 1 bp from trimLeft (index expected to be 1 bp shorter b/c of indel).
-			fastq1[r1_seq[(i1-1):(i2-1)]].write(r1_name+r1_seq[(trimLeft-1):]+r1_plus+r1_qual[(trimLeft-1):])
-			fastq2[r1_seq[(i1-1):(i2-1)]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
-			fileidx = idxids.index(r1_seq[(i1-1):(i2-1)])
+			fastq1[r2_seq[(i1-1):(i2-1)]].write(r1_name+r1_seq[(trimLeft-1):]+r1_plus+r1_qual[(trimLeft-1):])
+			fastq2[r2_seq[(i1-1):(i2-1)]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
+			fileidx = idxids.index(r2_seq[(i1-1):(i2-1)])
 			counts[fileidx] += 1
 
 		except (KeyError, ValueError) as e:
 			try:
-				obs_idx = r1_seq[i1:i2]  ## Add back likely 5-mers in the TCGTA index.
+				obs_idx = r2_seq[i1:i2]  ## Add back likely 5-mers in the TCGTA index.
 
 				if obs_idx == 'CGTAG' or obs_idx == 'TGTAG' or obs_idx == 'TCGAG' or obs_idx == 'TCGTG' or obs_idx == 'TCTAG': 
 					fastq1['TCGTA'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])

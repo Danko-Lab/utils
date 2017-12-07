@@ -201,14 +201,14 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
   cutadapt -a GATCGTCGGACTGTAGAACTCTGAACG -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R2.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R2.fastq ${name}_R2.fastq.gz &
   wait
   # remove NNNNNN and JJJJ from the 3 prime end of R1
-  cutadapt --cut -6 --minimum-length 15 ${TMPDIR}/${name}_trim_R1.fastq --output=${TMPDIR}/${name}_trim.4Nremoved_R1.fastq -q 20 &
+  cutadapt --cut -10 --minimum-length 15 ${TMPDIR}/${name}_trim_R1.fastq --output=${TMPDIR}/${name}_trim.4Nremoved_R1.fastq -q 20 &
   cutadapt --minimum-length 15 ${TMPDIR}/${name}_untrim_R1.fastq --output=${TMPDIR}/${name}_q20trim_R1.fastq -q 20 &
   wait
 
   cat ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq | paste - - - - |LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq &
      
-  # remove Nothing from the 3 prime end of R2
-  cutadapt --minimum-length 15 ${TMPDIR}/${name}_trim_R2.fastq --output=${TMPDIR}/${name}_trim.10Nremoved_R2.fastq -q 20 &
+  # remove NN from the 3 prime end of R2
+  cutadapt --cut -2 --minimum-length 15 ${TMPDIR}/${name}_trim_R2.fastq --output=${TMPDIR}/${name}_trim.10Nremoved_R2.fastq -q 20 &
   cutadapt --minimum-length 15 ${TMPDIR}/${name}_untrim_R2.fastq --output=${TMPDIR}/${name}_q20trim_R2.fastq -q 20 &
   wait
   cat ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.10Nremoved_R2.fastq | paste - - - - | LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq
@@ -219,7 +219,7 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
    prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup -min_len 15 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
 
    ## Separate into distinct fastq files.  Also trims off specified lengths of sequence.
-   # use the sepIndex_3primeJJ, which will Trims 3-prime UMI and J-barcode 
+   # use the sepIndex_3primeJJ, which will Trims 5-prime NN, 3-prime UMI(NNNNNN) and 3-prime J-barcode 
    python sepIndex_3primeJJ.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name} &
 
 #  rm ${TMPDIR}/${name}_trim_R1.fastq ${TMPDIR}/${name}_untrim_R1.fastq ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq

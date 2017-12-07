@@ -14,7 +14,7 @@ print "Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2
 print "Output prefix: " + out_prefix
 
 ## http://stackoverflow.com/questions/29550290/how-to-open-a-list-of-files-in-python
-idxids    = ['ATGC', 'TCGT', 'CGAT', 'GACG', 'GCAC', 'TGCA', 'CATG', 'GTCA', 'AGTC', 'TACT', 'CTAG', 'GCTG']
+idxids    = ['ATGC', 'TCGT', 'CGAT', 'GACG', 'GCAC', 'TGCA', 'CATG', 'GTCA', 'AGTC', 'TACT', 'CTAG', 'GCTG', 'NNNN']
 counts    = [0] * len(idxids)
 discard   = 0
 total     = 0
@@ -25,18 +25,21 @@ i2        = 4
 trimLeft  = 2 
 trimRight = 10 
 
-## Open input fastq files.
-fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'wb') for idx in idxids}
-fastq2 = {idx: gzip.open(out_prefix+'_'+idx+'_R2.fastq.gz', 'wb') for idx in idxids}
-
-## Read through the fastq file.
-r1=open(in_fastq_R1)
-r2=open(in_fastq_R2)
 
 ## Reverse complement function.
 def revComp(seq):
 	seq_dict = {'A':'T','T':'A','G':'C','C':'G','N':'N'}
 	return "".join([seq_dict[base] for base in reversed(seq)])
+
+## Open input fastq files.
+fastq1 = {revComp(idx): gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'wb') for idx in idxids}
+fastq2 = {revComp(idx): gzip.open(out_prefix+'_'+idx+'_R2.fastq.gz', 'wb') for idx in idxids}
+
+## Read through the fastq file.
+r1=open(in_fastq_R1)
+r2=open(in_fastq_R2)
+
+
 
 
 while True:
@@ -72,11 +75,13 @@ while True:
 	##############################################
 	## Separate distinct 5' barcodes.  ID idx.
 	try:
-		fastq1[revComp(r2_seq[i1:i2])].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
-		fastq2[revComp(r2_seq[i1:i2])].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
-		fileidx = idxids.index(revComp(r2_seq[i1:i2]))
+		fastq1[r2_seq[i1:i2]].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+		fastq2[r2_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
+		fileidx = idxids.index(r2_seq[i1:i2])
 		counts[fileidx] += 1
 	except (KeyError, ValueError) as e:
+		fastq1['NNNN'].write(r1_name+r1_seq+r1_plus+r1_qual)
+		fastq2['NNNN'].write(r2_name+r2_seq+r2_plus+r2_qual)
 		discard +=1
 		continue
 

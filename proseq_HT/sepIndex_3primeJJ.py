@@ -14,7 +14,7 @@ print "Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2
 print "Output prefix: " + out_prefix
 
 ## http://stackoverflow.com/questions/29550290/how-to-open-a-list-of-files-in-python
-idxids    = ['ATGCA', 'TCGTA', 'CGATA', 'GACGA', 'GCACA', 'TGCAA', 'CATGA', 'GTCAA', 'AGTCA', 'TACTA', 'CTAGA', 'GCTGA']
+idxids    = ['ATGC', 'TCGT', 'CGAT', 'GACG', 'GCAC', 'TGCA', 'CATG', 'GTCA', 'AGTC', 'TACT', 'CTAG', 'GCTG']
 counts    = [0] * len(idxids)
 discard   = 0
 total     = 0
@@ -72,40 +72,13 @@ while True:
 	##############################################
 	## Separate distinct 5' barcodes.  ID idx.
 	try:
-		fastq1[r2_seq[i1:i2]].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
-		fastq2[r2_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
-		fileidx = idxids.index(r2_seq[i1:i2])
+		fastq1[revComp(r2_seq[i1:i2])].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+		fastq2[revComp(r2_seq[i1:i2])].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
+		fileidx = idxids.index(revComp(r2_seq[i1:i2]))
 		counts[fileidx] += 1
-
 	except (KeyError, ValueError) as e:
-		try:       ## Off by one means can remove 1 bp from trimLeft (index expected to be 1 bp shorter b/c of indel).
-			fastq1[r2_seq[(i1-1):(i2-1)]].write(r1_name+r1_seq[(trimLeft-1):]+r1_plus+r1_qual[(trimLeft-1):])
-			fastq2[r2_seq[(i1-1):(i2-1)]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
-			fileidx = idxids.index(r2_seq[(i1-1):(i2-1)])
-			counts[fileidx] += 1
-
-		except (KeyError, ValueError) as e:
-			try:
-				obs_idx = r2_seq[i1:i2]  ## Add back likely 5-mers in the TCGTA index.
-
-				if obs_idx == 'CGTAG' or obs_idx == 'TGTAG' or obs_idx == 'TCGAG' or obs_idx == 'TCGTG' or obs_idx == 'TCTAG': 
-					fastq1['TCGTA'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
-					fastq2['TCGTA'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
-					fileidx = idxids.index('TCGTA')
-					counts[fileidx] += 1
-
-				elif obs_idx == 'TGCAG' or obs_idx == 'ATGAG':
-					fastq1['ATGCA'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
-					fastq2['ATGCA'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
-					fileidx = idxids.index('ATGCA')
-					counts[fileidx] += 1
-
-				else:
-					discard += 1
-
-			except (KeyError, ValueError) as e:
-				discard +=1
-				continue
+		discard +=1
+		continue
 
 
 ## Close

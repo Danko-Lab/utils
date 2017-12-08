@@ -222,8 +222,8 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
    # use the sepIndex_3primeJJ, which will Trims 5-prime NN, 3-prime UMI(NNNNNN) and 3-prime J-barcode 
    python sepIndex_3primeJJ.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name} &
 
-#  rm ${TMPDIR}/${name}_trim_R1.fastq ${TMPDIR}/${name}_untrim_R1.fastq ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq
-#  rm ${TMPDIR}/${name}_trim_R2.fastq ${TMPDIR}/${name}_untrim_R2.fastq ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.10Nremoved_R2.fastq
+  rm ${TMPDIR}/${name}_trim_R1.fastq ${TMPDIR}/${name}_untrim_R1.fastq ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq
+  rm ${TMPDIR}/${name}_trim_R2.fastq ${TMPDIR}/${name}_untrim_R2.fastq ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.10Nremoved_R2.fastq
 
  done
 

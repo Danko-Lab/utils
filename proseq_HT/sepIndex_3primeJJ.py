@@ -13,8 +13,14 @@ print "Separating distinct index fastq files."
 print "Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2
 print "Output prefix: " + out_prefix
 
+## Reverse complement function.
+def revComp(seq):
+	seq_dict = {'A':'T','T':'A','G':'C','C':'G','N':'N'}
+	return "".join([seq_dict[base] for base in reversed(seq)])
+
 ## http://stackoverflow.com/questions/29550290/how-to-open-a-list-of-files-in-python
 idxids    = ['ATGC', 'TCGT', 'CGAT', 'GACG', 'GCAC', 'TGCA', 'CATG', 'GTCA', 'AGTC', 'TACT', 'CTAG', 'GCTG', 'NNNN']
+revComp_idxids = [revComp(idx) for idx in idxids]
 counts    = [0] * len(idxids)
 discard   = 0
 total     = 0
@@ -26,10 +32,7 @@ trimLeft  = 2
 trimRight = 10 
 
 
-## Reverse complement function.
-def revComp(seq):
-	seq_dict = {'A':'T','T':'A','G':'C','C':'G','N':'N'}
-	return "".join([seq_dict[base] for base in reversed(seq)])
+
 
 ## Open input fastq files.
 fastq1 = {revComp(idx): gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'wb') for idx in idxids}
@@ -77,7 +80,7 @@ while True:
 	try:
 		fastq1[r2_seq[i1:i2]].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
 		fastq2[r2_seq[i1:i2]].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
-		fileidx = idxids.index(r2_seq[i1:i2])
+		fileidx = revComp_idxids.index(r2_seq[i1:i2])
 		counts[fileidx] += 1
 	except (KeyError, ValueError) as e:
 		fastq1['NNNN'].write(r1_name+r1_seq+r1_plus+r1_qual)

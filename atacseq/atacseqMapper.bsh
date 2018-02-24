@@ -23,12 +23,12 @@ for name in $NAMES
   bwa mem -t 32 $bwaindx ${name}_1.fastq.gz ${name}_2.fastq.gz | \
 	samtools view -bh - > ${scratch}/${name}.tmp.bam
 
-  ## Make a BAM file for peak calling in MACS.  Criteria: Sorted, MAPQ >= 5, exclude potential PCR duplicates.
-  samtools sort ${scratch}/${name}.tmp.bam | samtools rmdup -S ${scratch}/${name}.tmp.bam - | samtools view -bf 0x2 -q 5 - > ${scratch}/${name}.bam
+  ## Make a BAM file for peak calling in MACS.  Criteria: Sorted, MAPQ >= 10, exclude potential PCR duplicates.
+  samtools sort ${scratch}/${name}.tmp.bam | samtools rmdup -S ${scratch}/${name}.tmp.bam - | samtools view -bf 0x2 -q 10 - > ${scratch}/${name}.bam
 
   ## Call peaks with MACS2
   cd ${scratch}
-  macs2 callpeak -t ${name}.bam -f BAMPE -g hs -n ${name} -B -q 0.001
+  macs2 callpeak -t ${name}.bam -f BAMPE -g hs -n ${name} -B -q 0.01
   bedGraphToBigWig ${name}_treat_pileup.bdg ${chromInfo} ${name}.bw
   bgzip ${name}_peaks.narrowPeak
   tabix -p bed ${name}_peaks.narrowPeak.gz

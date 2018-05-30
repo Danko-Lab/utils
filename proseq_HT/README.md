@@ -22,3 +22,9 @@ In addition to the in-house scripts provided, the pipelines depend on several co
 
 Please make sure you can call the bioinformatics tools from your current working directory.    
 
+
+The pipeline is designed for Library that: 
+-------------
+* 5 prime end of nascent RNA is on 5 prime end of R1, same strand of R1.
+
+* 3 prime end of nascent RNA is on 5 prime end of R2, opposite strand of R2.

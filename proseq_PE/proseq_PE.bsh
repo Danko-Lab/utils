@@ -116,12 +116,20 @@ while test $# -gt 0; do
                         export MAP5="FALSE"
                         shift
                         ;;
-                -ADAPT1*)
+                --ADAPT1*)
                         export ADAPT1=`echo $1 | sed -e 's/^[^=]*=//g'`
                         shift
                         ;;
-                -ADAPT2*)
+                --ADAPT2*)
                         export ADAPT2=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                --UMI1*)
+                        export UMI1=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                --UMI2*)
+                        export UMI2=`echo $1 | sed -e 's/^[^=]*=//g'`
                         shift
                         ;;
                 *)
@@ -130,10 +138,7 @@ while test $# -gt 0; do
         esac
 done
 ## need to add ARGUMENTS
-echo ${ADAPT1}
-echo ${ADAPT2}
-#UMI
-#UMI_l
+
 
 ## CHECK ARGUMENTS.
 if [ -z "$BWAIDX" ]; then
@@ -167,13 +172,12 @@ fi
 if [ -z "$ADAPT2" ]; then
         ADAPT2="GATCGTCGGACTGTAGAACTCTGAACG"
 fi
-if ![ -z "$UMI" ]; then
-  if [ -z "$UMI_l" ]; then
-          echo "UMI_l (length of UMI barcode) is required."
-  exit 1
-  fi
+if [ -z "$UMI1" ]; then
+   UMI1=0
 fi
-
+if [ -z "$UMI2" ]; then
+   UMI2=0
+fi
 if [ -z "$MAP5" ]; then
         MAP5="TRUE"
 fi
@@ -204,6 +208,11 @@ echo " "
 echo "Optional operations:"
 echo "Map 5' ends               $MAP5"
 echo " " 
+echo "ADAPT1                    $ADAPT1"
+echo "ADAPT2                    $ADAPT2"
+echo "UMI1 barcode length        $UMI1"
+echo "UMI2 barcode length        $UMI2"
+
 
 ## Exits .. for debugging.
 #exit 1
@@ -217,7 +226,7 @@ echo " "
 echo "Preprocessing fastq files:"
 mkdir ${TMPDIR}/noadapt
 mkdir ${TMPDIR}/nodups
-mkdir ${TMPDIR}/sep
+#mkdir ${TMPDIR}/sep
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do
@@ -227,32 +236,39 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
   cutadapt -a ${ADAPT2} -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R2.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R2.fastq ${name}_R2.fastq.gz &
   wait
   
-  if ![ -z "$UMI" ]; then # if there is UMI flag
-  # remove UMI barcode from the 3 prime end of R1
-  cutadapt --cut -4 --minimum-length 15 ${TMPDIR}/${name}_trim_R1.fastq --output=${TMPDIR}/${name}_trim.4Nremoved_R1.fastq -q 20 &
+  # Read1
   cutadapt --minimum-length 15 ${TMPDIR}/${name}_untrim_R1.fastq --output=${TMPDIR}/${name}_q20trim_R1.fastq -q 20 &
-  wait
+  if [ ${UMI2} != 0 ]; then # remove UMI2 barcode from the 3 prime end of R1
+   cutadapt --cut -${UMI2} --minimum-length 15 ${TMPDIR}/${name}_trim_R1.fastq --output=${TMPDIR}/${name}_trim.${UMI2}Nremoved_R1.fastq -q 20
+   cat ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.${UMI2}Nremoved_R1.fastq | paste - - - - |LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq &
+  else
+   cat ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim_R1.fastq | paste - - - - |LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq &
   fi
-  
-  cat ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq | paste - - - - |LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq &
-     
-  # remove NNNN and JJJJAG  from the 3 prime end of R2
-  cutadapt --cut -10 --minimum-length 15 ${TMPDIR}/${name}_trim_R2.fastq --output=${TMPDIR}/${name}_trim.10Nremoved_R2.fastq -q 20 &
-  cutadapt --minimum-length 15 ${TMPDIR}/${name}_untrim_R2.fastq --output=${TMPDIR}/${name}_q20trim_R2.fastq -q 20 &
-  wait
-  cat ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.10Nremoved_R2.fastq | paste - - - - | LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq
-  
 
-   ## Collapse reads using prinseq-lite.pl.
-   ## Remove PCR duplciates.
-   prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup -min_len 15 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
+  # Read2
+  cutadapt --minimum-length 15 ${TMPDIR}/${name}_untrim_R2.fastq --output=${TMPDIR}/${name}_q20trim_R2.fastq -q 20 &
+  if [ ${UMI2} != 0 ]; then # remove UMI1  from the 3 prime end of R2
+   cutadapt --cut -${UMI1} --minimum-length 15 ${TMPDIR}/${name}_trim_R2.fastq --output=${TMPDIR}/${name}_trim.${UMI1}Nremoved_R2.fastq -q 20
+   cat ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.${UMI1}Nremoved_R2.fastq | paste - - - - | LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq
+  else
+   cat ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim_R2.fastq | paste - - - - | LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq
+  fi
+
+   ## Collapse reads using prinseq-lite.pl. if there are UMI barcodes
+  if [[ ${UMI2} != 0 || ${UMI1} != 0 ]]; then 
+  # Remove PCR duplciates.
+   prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup_withBarcode 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd
+  # trim the UMI barcode after dereplicate
+   prinseq-lite.pl -min_len 15 -trim_left ${UMI1} -trim_right ${UMI2} -fastq ${TMPDIR}/nodups/${name}_dedup_withBarcode_1.fastq -fastq2 ${TMPDIR}/nodups/${name}_dedup_withBarcode_2.fastq -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup 2>> ${OUTPUT}/${name}.prinseq-pcrDups.gd
+  fi
+
 
    ## Separate into distinct fastq files.  Also trims off specified lengths of sequence.
    # use the sepIndex.py without Trims 3-prime UMI and J-barcode 
    python sepIndex.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name} &
 
-  #rm ${TMPDIR}/${name}_trim_R1.fastq ${TMPDIR}/${name}_untrim_R1.fastq ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq
-  #rm ${TMPDIR}/${name}_trim_R2.fastq ${TMPDIR}/${name}_untrim_R2.fastq ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.10Nremoved_R2.fastq
+  #rm ${TMPDIR}/${name}_trim_R1.fastq ${TMPDIR}/${name}_untrim_R1.fastq ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.${UMI2}Nremoved_R1.fastq
+  #rm ${TMPDIR}/${name}_trim_R2.fastq ${TMPDIR}/${name}_untrim_R2.fastq ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.${UMI1}Nremoved_R2.fastq
 
  done
 

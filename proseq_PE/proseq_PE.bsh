@@ -116,11 +116,24 @@ while test $# -gt 0; do
                         export MAP5="FALSE"
                         shift
                         ;;
+                -ADAPT1*)
+                        export ADAPT1=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -ADAPT2*)
+                        export ADAPT2=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
                 *)
                         break
                         ;;
         esac
 done
+## need to add ARGUMENTS
+echo ${ADAPT1}
+echo ${ADAPT2}
+#UMI
+#UMI_l
 
 ## CHECK ARGUMENTS.
 if [ -z "$BWAIDX" ]; then
@@ -148,6 +161,19 @@ fi
 if [ -z "$TMPDIR" ]; then
         TMPDIR="./"
 fi
+if [ -z "$ADAPT1" ]; then
+        ADAPT1="AGATCGGAAGAGCACACGTCTGAACTC"
+fi
+if [ -z "$ADAPT2" ]; then
+        ADAPT2="GATCGTCGGACTGTAGAACTCTGAACG"
+fi
+if ![ -z "$UMI" ]; then
+  if [ -z "$UMI_l" ]; then
+          echo "UMI_l (length of UMI barcode) is required."
+  exit 1
+  fi
+fi
+
 if [ -z "$MAP5" ]; then
         MAP5="TRUE"
 fi
@@ -195,15 +221,19 @@ mkdir ${TMPDIR}/sep
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do
-  ## Remove adapter, NNNN, JJJJAG, and low quality (q=20) base from 3prime end of reads. Keep read length >=15 after trimmming
-  cutadapt -a AGATCGGAAGAGCACACGTCTGAACTC -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R1.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R1.fastq ${name}_R1.fastq.gz &
-  cutadapt -a GATCGTCGGACTGTAGAACTCTGAACG -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R2.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R2.fastq ${name}_R2.fastq.gz &
+  ## Remove adapter, UMI barcode, JJJJAG, and low quality (q=20) base from 3prime end of reads. Keep read length >=15 after trimmming
+  # Remove adapter
+  cutadapt -a ${ADAPT1} -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R1.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R1.fastq ${name}_R1.fastq.gz &
+  cutadapt -a ${ADAPT2} -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R2.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R2.fastq ${name}_R2.fastq.gz &
   wait
-  # remove NNNN from the 3 prime end of R1
+  
+  if ![ -z "$UMI" ]; then # if there is UMI flag
+  # remove UMI barcode from the 3 prime end of R1
   cutadapt --cut -4 --minimum-length 15 ${TMPDIR}/${name}_trim_R1.fastq --output=${TMPDIR}/${name}_trim.4Nremoved_R1.fastq -q 20 &
   cutadapt --minimum-length 15 ${TMPDIR}/${name}_untrim_R1.fastq --output=${TMPDIR}/${name}_q20trim_R1.fastq -q 20 &
   wait
-
+  fi
+  
   cat ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq | paste - - - - |LC_ALL=C sort --temporary-directory=${TMPDIR} --parallel=10 -k1,1 -S 10G | tr '\t' '\n' > ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq &
      
   # remove NNNN and JJJJAG  from the 3 prime end of R2
@@ -221,15 +251,15 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
    # use the sepIndex.py without Trims 3-prime UMI and J-barcode 
    python sepIndex.py ${TMPDIR}/nodups/${name}_dedup_1.fastq ${TMPDIR}/nodups/${name}_dedup_2.fastq ${TMPDIR}/sep/${name} &
 
-  rm ${TMPDIR}/${name}_trim_R1.fastq ${TMPDIR}/${name}_untrim_R1.fastq ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq
-  rm ${TMPDIR}/${name}_trim_R2.fastq ${TMPDIR}/${name}_untrim_R2.fastq ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.10Nremoved_R2.fastq
+  #rm ${TMPDIR}/${name}_trim_R1.fastq ${TMPDIR}/${name}_untrim_R1.fastq ${TMPDIR}/${name}_q20trim_R1.fastq ${TMPDIR}/${name}_trim.4Nremoved_R1.fastq
+  #rm ${TMPDIR}/${name}_trim_R2.fastq ${TMPDIR}/${name}_untrim_R2.fastq ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.10Nremoved_R2.fastq
 
  done
 
 wait
 ## Cleanup.
-rm ${TMPDIR}/noadapt/*.fastq
-rm ${TMPDIR}/nodups/*.fastq
+#rm ${TMPDIR}/noadapt/*.fastq
+#rm ${TMPDIR}/nodups/*.fastq
 
 #############################################
 ## Align reads.

@@ -320,7 +320,7 @@ for name in `ls  ${TMPDIR}/nodups/*_dedup_end_1.fastq.gz | awk -F"/" '{print $NF
  done
 
 ## Cleanup
-find ${TMPDIR} -name "*.sort.bam" -size -1024k -delete
+#find ${TMPDIR} -name "*.sort.bam" -size -1024k -delete
 
 #############################################
 ## Write out the bigWigs.
@@ -330,7 +330,6 @@ for f in ${TMPDIR}/*.sort.bam
  do
    j=`echo $f | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3- |rev `
    echo $j > ${OUTPUT}/${j}.align.log
-
    if [ "${MAP5}" == "TRUE" ] ; then  ## report The 5' end of the RNA. Danko lab leChRO-Seq protocol is on the 5' of _R1 readl, same strand of R1 ($9) 
       bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$2,$2+1,$7,$8,$9}; ($9 == "-") {print $1,$3-1,$3,$7,$8,$9}' | gzip > ${TMPDIR}/$j.bed.gz
    else ## report The 3' end of the RNA.  Danko lab leChRO-Seq protocol is on the 5 prime of _R2 read, opposite strand of R2 (R2 strand $10, R1 strand $9)
@@ -339,25 +338,20 @@ for f in ${TMPDIR}/*.sort.bam
 
    echo 'Number of mappable reads:' >> ${OUTPUT}/${j}.align.log
    echo `zcat ${TMPDIR}/$j.bed.gz | grep "" -c` >> ${OUTPUT}/${j}.align.log
-
    ## Remove rRNA and reverse the strand (PRO-seq).
    zcat ${TMPDIR}/$j.bed.gz | grep "rRNA\|chrM" -v | grep "_" -v | sort-bed - | gzip > ${TMPDIR}/$j.nr.rs.bed.gz
-
    echo 'Number of mappable reads (excluding rRNA):' >> ${OUTPUT}/${j}.align.log
    echo `zcat ${TMPDIR}/$j.nr.rs.bed.gz | grep "" -c` >> ${OUTPUT}/${j}.align.log
-
    ## Convert to bedGraph ... Can't gzip these, unfortunately.
    bedtools genomecov -bg -i ${TMPDIR}/$j.nr.rs.bed.gz -g ${CHINFO} -strand + > ${TMPDIR}/$j\_plus.bedGraph
    bedtools genomecov -bg -i ${TMPDIR}/$j.nr.rs.bed.gz -g ${CHINFO} -strand - > ${TMPDIR}/$j\_minus.noinv.bedGraph
-
    ## Invert minus strand.
    cat ${TMPDIR}/$j\_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${TMPDIR}/$j\_minus.bedGraph ## Invert read counts on the minus strand.
-
    ## Then to bigWig
    bedGraphToBigWig ${TMPDIR}/$j\_plus.bedGraph ${CHINFO} ${OUTPUT}/$j\_plus.bw
    bedGraphToBigWig ${TMPDIR}/$j\_minus.bedGraph ${CHINFO} ${OUTPUT}/$j\_minus.bw
 
-   rm ${TMPDIR}/$j.nr.rs.bed.gz ${TMPDIR}/$j.bed.gz ${TMPDIR}/$j*.bedGraph
+   #rm ${TMPDIR}/$j.nr.rs.bed.gz ${TMPDIR}/$j.bed.gz ${TMPDIR}/$j*.bedGraph
  done
 
 

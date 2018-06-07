@@ -12,29 +12,30 @@ while test $# -gt 0; do
 			echo "Requirements in current working directory:"
 			echo "cutadapt 1.8.3, prinseq-lite.pl 0.20.2"
 			echo ""
-      echo "bash proseqHT.bsh [options] [files]"
+      echo "bash proseq_PE.bsh [options] [files]"
       echo " "
 			echo "options:"
 			echo " "
       echo "To get help:"
-      echo "-h, --help                show this brief help menu."
+      echo "-h, --help                Show this brief help menu."
 			echo " "
 			echo "Required options:"
-      echo "-i, --bwa-index=PATH      path to the BWA index of the target genome (i.e., bwa index)."
-			echo "-c, --chrom-info=PATH     location of the chromInfo table."
+      echo "-i, --bwa-index=PATH      Path to the BWA index of the target genome (i.e., bwa index)."
+			echo "-c, --chrom-info=PATH     Location of the chromInfo table."
 			echo " "
 			echo "I/O options:"
 			echo "-I, --fastq=PREFIX	Prefix for input files."
-			echo "-T, --tmp=PATH            path to a temporary storage directory."
-      echo "-O, --output-dir=DIR      specify a directory to store output in."
+			echo "-T, --tmp=PATH            Path to a temporary storage directory."
+      echo "-O, --output-dir=DIR      Specify a directory to store output in."
       echo " "
       echo "Optional operations:"
-      echo "--RNA5=R1_5prime|R2_5prime the location of the 5' end of RNA [default: R1_5prime]"
-      echo "--RNA3=R1_5prime|R2_5prime the location of the 3' end of RNA [default: R2_5prime]"
+      echo "--RNA5=R1_5prime Specify the location of the 5' end of RNA [default: R1_5prime]"
+      echo "--RNA3=R1_5prime Specify the location of the 3' end of RNA [default: R2_5prime]"
       echo "available options: R1_5prime: the 5' end of R1 reads. R2_5prime: the 5' end of R2 reads" 
       echo " "
-      echo "-5, --map5=TRUE     report the 5' end of RNA [default --map5=TRUE]"
-      echo "-3, --map5=FALSE    report the 3' end of RNA [default --map5=TRUE]"
+      echo "-5, --map5=TRUE     Report the 5' end of RNA [default --map5=TRUE]"
+      echo "-3, --map5=FALSE    Report the 3' end of RNA [default --map5=TRUE]"
+      echo "-s, --opposite-strand=TRUE  Enable this option if the RNA are at the different strand as the reads set at RNA5 [default: FALSE]"
 
                         exit 0
                         ;;
@@ -134,6 +135,14 @@ while test $# -gt 0; do
                         export MAP5="FALSE"
                         shift
                         ;;
+                -s)
+                        export OPP="TRUE"
+                        shift
+                        ;;
+                --opposite-strand*)
+                        export OPP=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
                 --ADAPT1*)
                         export ADAPT1=`echo $1 | sed -e 's/^[^=]*=//g'`
                         shift
@@ -213,8 +222,24 @@ fi
 if [ -z "$add_barcode2" ]; then
    add_barcode2=0
 fi
-if [ -z "$RNA5" || "$RNA3" ]; then
+if [[ -z "$RNA5" && "$RNA3" ]]; then
+    RNA5="R1_5prime"
+fi
+if [[ "$RNA3" == "R1_5prime" ]]; then
+   RNA5="R2_5prime"
+fi
+if [[ "$RNA3" == "R2_5prime" ]]; then
    RNA5="R1_5prime"
+fi
+if [[ "$RNA5" == "R1_5prime" || "$RNA5" == "R2_5prime" ]] ; then 
+        :
+else
+        echo "--RNA5 and --RNA3 value can only be R1_5prime or R2_5prime."
+        echo " use bash proseq_PE.bsh --help."
+        exit 1
+fi
+if [ -z "$OPP" ]; then
+   OPP="FALSE"
 fi
 if [ -z "$MAP5" ]; then
         MAP5="TRUE"
@@ -244,7 +269,10 @@ echo "temp folder               $TMPDIR"
 echo "output-dir                $OUTPUT"
 echo " "
 echo "Optional operations:"
-echo "Map 5' ends               $MAP5"
+echo "Location of 5' of RNA     $RNA5"
+echo "Location of 3' of RNA     $RNA3"
+echo "Report 5' ends            $MAP5"
+echo "Report opposite strand    $OPP"
 echo " " 
 echo "ADAPT1                    $ADAPT1"
 echo "ADAPT2                    $ADAPT2"
@@ -252,7 +280,7 @@ echo "UMI1 barcode length       $UMI1"
 echo "UMI2 barcode length       $UMI2"
 echo "add_barcode1 length       $add_barcode1"
 echo "add_barcode2 length       $add_barcode2"
-echo "thread                    $thread"
+echo "number of threads         $thread"
 
 
 ## Exits .. for debugging.
@@ -347,10 +375,21 @@ for f in ${TMPDIR}/*.sort.bam
  do
    j=`echo $f | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3- |rev `
    echo $j > ${OUTPUT}/${j}.align.log
-   if [ "${MAP5}" == "TRUE" ] ; then  ## report The 5' end of the RNA. Danko lab leChRO-Seq protocol is on the 5' of _R1 readl, same strand of R1 ($9) 
-      bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$2,$2+1,$7,$8,$9}; ($9 == "-") {print $1,$3-1,$3,$7,$8,$9}' | gzip > ${TMPDIR}/$j.bed.gz
-   else ## report The 3' end of the RNA.  Danko lab leChRO-Seq protocol is on the 5 prime of _R2 read, opposite strand of R2 (R2 strand $10, R1 strand $9)
-      bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/kill.warnings | awk 'BEGIN{OFS="\t"} ($10 == "-") {print $1,$6-1,$6,$7,$8,$9}; ($10 == "+") {print $1,$5,$5+1,$7,$8,$9}' | gzip > ${TMPDIR}/$j.bed.gz
+   if [ "${RNA5}" == "R1_5prime" ] ; then
+     if [ "${OPP}" == "FALSE" ] ; then
+       if [ "${MAP5}" == "TRUE" ] ; then  ## report The 5' end of the RNA. Danko lab leChRO-Seq protocol is on the 5' of _R1 readl, same strand of R1 ($9) 
+          bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$2,$2+1,$7,$8,$9}; ($9 == "-") {print $1,$3-1,$3,$7,$8,$9}' | gzip > ${TMPDIR}/$j.bed.gz
+       else ## report The 3' end of the RNA.  Danko lab leChRO-Seq protocol is on the 5 prime of _R2 read, opposite strand of R2 (R2 strand $10, R1 strand $9)
+          bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/kill.warnings | awk 'BEGIN{OFS="\t"} ($10 == "-") {print $1,$6-1,$6,$7,$8,$9}; ($10 == "+") {print $1,$5,$5+1,$7,$8,$9}' | gzip > ${TMPDIR}/$j.bed.gz
+       fi
+     elif [ "${OPP}" == "TRUE" ] ; then
+       if [ "${MAP5}" == "TRUE" ] ; then  ## report The 5' end of the RNA. Danko lab leChRO-Seq protocol is on the 5' of _R1 readl, same strand of R1 ($9) 
+          bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$2,$2+1,$7,$8,$9}; ($9 == "-") {print $1,$3-1,$3,$7,$8,$9}' | gzip > ${TMPDIR}/$j.bed.gz
+       else ## report The 3' end of the RNA.  Danko lab leChRO-Seq protocol is on the 5 prime of _R2 read, opposite strand of R2 (R2 strand $10, R1 strand $9)
+          bedtools bamtobed -bedpe -mate1 -i $f 2> ${TMPDIR}/kill.warnings | awk 'BEGIN{OFS="\t"} ($10 == "-") {print $1,$6-1,$6,$7,$8,$9}; ($10 == "+") {print $1,$5,$5+1,$7,$8,$9}' | gzip > ${TMPDIR}/$j.bed.gz
+       fi
+       
+     fi
    fi
 
    echo 'Number of mappable reads:' >> ${OUTPUT}/${j}.align.log

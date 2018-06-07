@@ -12,26 +12,30 @@ while test $# -gt 0; do
 			echo "Requirements in current working directory:"
 			echo "cutadapt 1.8.3, prinseq-lite.pl 0.20.2"
 			echo ""
-                        echo "bash proseqHT.bsh [options] [files]"
-                        echo " "
+      echo "bash proseqHT.bsh [options] [files]"
+      echo " "
 			echo "options:"
 			echo " "
-                        echo "To get help:"
-                        echo "-h, --help                show this brief help menu."
+      echo "To get help:"
+      echo "-h, --help                show this brief help menu."
 			echo " "
 			echo "Required options:"
-                        echo "-i, --bwa-index=PATH      path to the BWA index of the target genome (i.e., bwa index)."
+      echo "-i, --bwa-index=PATH      path to the BWA index of the target genome (i.e., bwa index)."
 			echo "-c, --chrom-info=PATH     location of the chromInfo table."
 			echo " "
 			echo "I/O options:"
 			echo "-I, --fastq=PREFIX	Prefix for input files."
 			echo "-T, --tmp=PATH            path to a temporary storage directory."
-                        echo "-O, --output-dir=DIR      specify a directory to store output in."
-                        echo " "
-                        echo "Optional operations:"
-                        echo "-G, --map5=TRUE     map the 5' end of RNA, aka 5' end of R1 reads [default == TRUE]"
-                        echo "-3, --map5=FALSE    map the 3' end of RNA, aka 5' end of R2 reads [default: report 5' end of R1]"
-			echo " "
+      echo "-O, --output-dir=DIR      specify a directory to store output in."
+      echo " "
+      echo "Optional operations:"
+      echo "--RNA5=R1_5prime|R2_5prime the location of the 5' end of RNA [default: R1_5prime]"
+      echo "--RNA3=R1_5prime|R2_5prime the location of the 3' end of RNA [default: R2_5prime]"
+      echo "available options: R1_5prime: the 5' end of R1 reads. R2_5prime: the 5' end of R2 reads" 
+      echo " "
+      echo "-5, --map5=TRUE     report the 5' end of RNA [default --map5=TRUE]"
+      echo "-3, --map5=FALSE    report the 3' end of RNA [default --map5=TRUE]"
+
                         exit 0
                         ;;
                 -i)
@@ -108,7 +112,17 @@ while test $# -gt 0; do
                         export thread=`echo $1 | sed -e 's/^[^=]*=//g'`
                         shift
                         ;;
-                -G)
+                --RNA5*) # report location of the 5 prime end of RNA
+                         # acce
+                        export RNA5=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                --RNA3*) # report location of the 5 prime end of RNA
+                         # acce
+                        export RNA3=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -5)
                         export MAP5="TRUE"
                         shift
                         ;;
@@ -155,12 +169,12 @@ done
 ## CHECK ARGUMENTS.
 if [ -z "$BWAIDX" ]; then
 	echo "--bwa-index is required."
-	echo " use bash proseqMapper.bsh --help."
+	echo " use bash proseq_PE.bsh --help."
 	exit 1
 fi
 if [ -z "$CHINFO" ]; then
         echo "--chrom-info is required."
-        echo " use bash proseqMapper.bsh --help."
+        echo " use bash proseq_PE.bsh --help."
         exit 1
 fi
 if [ -z "$FQ_INPUT" ]; then
@@ -199,6 +213,9 @@ fi
 if [ -z "$add_barcode2" ]; then
    add_barcode2=0
 fi
+if [ -z "$RNA5" || "$RNA3" ]; then
+   RNA5="R1_5prime"
+fi
 if [ -z "$MAP5" ]; then
         MAP5="TRUE"
 fi
@@ -207,8 +224,8 @@ if [ "${MAP5}" == "TRUE" ] ; then
 elif [ "${MAP5}" == "FALSE" ] ; then
         :
 else
-        echo "--map5 value is incorrect."
-        echo " use bash proseqMapper.bsh --help."
+        echo "--map5 value can only be TRUE or FALSE."
+        echo " use bash proseq_PE.bsh --help."
         exit 1
 fi
 

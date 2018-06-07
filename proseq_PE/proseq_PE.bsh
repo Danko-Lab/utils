@@ -172,7 +172,6 @@ while test $# -gt 0; do
                         ;;
         esac
 done
-## need to add ARGUMENTS
 
 
 ## CHECK ARGUMENTS.
@@ -193,7 +192,7 @@ fi
 if [ -z "$OUTPUT" ]; then
         echo "No output path specified.  Using ./My_proseqHT_output_dir-date"
         now=$(date +"%m_%d_%Y")
-        OUTPUT=./My_proseqHT_output_dir-${now}
+        OUTPUT=./My_proseq_output_dir-${now}
 fi
 if [ ! -d $OUTPUT ]; then
   mkdir $OUTPUT
@@ -222,7 +221,7 @@ fi
 if [ -z "$add_barcode2" ]; then
    add_barcode2=0
 fi
-if [[ -z "$RNA5" && "$RNA3" ]]; then
+if [[ -z "$RNA5" && -z "$RNA3" ]]; then
     RNA5="R1_5prime"
 fi
 if [[ "$RNA3" == "R1_5prime" ]]; then
@@ -253,6 +252,11 @@ else
         echo " use bash proseq_PE.bsh --help."
         exit 1
 fi
+
+## Check all the bioinformatics tools can be called from current working directory.
+for tool in cutadapt prinseq-lite.pl bwa samtools bedtools bedGraphToBigWig
+do command -v ${tool} >/dev/null 2>&1 || { echo >&2 ${tool}" is required. Please make sure you can call the bioinformatics tools from your current working directoryb.  Aborting."; exit 1; }
+done
 
 # bash generate random 32 character alphanumeric string (upper and lowercase).
 TMPDIR=$TMPDIR/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)

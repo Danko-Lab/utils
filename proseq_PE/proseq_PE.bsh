@@ -281,6 +281,23 @@ for tool in cutadapt prinseq-lite.pl bwa samtools bedtools bedGraphToBigWig
 do command -v ${tool} >/dev/null 2>&1 || { echo >&2 ${tool}" is required. Please make sure you can call the bioinformatics tools from your current working directoryb.  Aborting."; exit 1; }
 done
 
+## Cehck if input file end with _R1.fastq.gz or _R2.fastq.gz
+tmp=${FQ_INPUT}
+FQ_INPUT=()
+for name in ${tmp}
+do 
+  if [ ! -f ${name}_R1.fastq.gz ]; then
+    echo ""
+    echo "##################################################################################"
+    echo " File ${name}_R1.fastq.gz was not found! Skip ${name}*.fastq.gz from analysis."
+    echo " Please make sure you have the correct file suffix!                           " 
+    echo "##################################################################################"
+    echo ""
+  else
+  FQ_INPUT+=(${name})
+  fi
+done
+
 # bash generate random 32 character alphanumeric string (upper and lowercase).
 TMPDIR=$TMPDIR/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
@@ -292,7 +309,7 @@ echo "Input files/ paths:"
 echo "bwa index                 $BWAIDX"
 echo "chromInfo                 $CHINFO"
 i=1
-for name in $FQ_INPUT
+for name in ${FQ_INPUT[@]}
   do echo "input prefix $i            $name"
   let "i++"
 done
@@ -315,7 +332,7 @@ echo "number of threads         $thread"
 
 
 ## Exits .. for debugging.
-#exit 1
+exit 1
 
 ## DOIT!
 mkdir ${TMPDIR}
@@ -327,14 +344,14 @@ echo "Preprocessing fastq files:"
 mkdir ${TMPDIR}/noadapt
 mkdir ${TMPDIR}/nodups
 
-for name in $FQ_INPUT
+for name in ${FQ_INPUT[@]}
  do
   ## Remove adapter, UMI barcode, additional barcode, and low quality (q=20) base from 3prime end of reads. Keep read length >=15 after trimmming
   # Remove adapter
   cutadapt -a ${ADAPT1} -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R1.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R1.fastq ${name}_R1.fastq.gz &
   cutadapt -a ${ADAPT2} -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R2.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R2.fastq ${name}_R2.fastq.gz &
   wait
-  
+
   # Read1
   # remove UMI2 and add_barcode2 from the 3 prime end of R1
    n2=$[UMI2+add_barcode2]

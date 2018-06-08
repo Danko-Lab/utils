@@ -10,9 +10,9 @@ while test $# -gt 0; do
 			echo "BAM and bedGraph files to the current working directory as output."
 			echo ""
 			echo "Requirements in current working directory:"
-			echo "cutadapt 1.8.3, prinseq-lite.pl 0.20.2"
+			echo "cutadapt 1.8.3, prinseq-lite.pl 0.20.2, bwa, samtools, bedtools, bedGraphToBigWig"
 			echo ""
-      echo "bash proseq_PE.bsh [options] [files]"
+      echo "bash proseq_PE.bsh [options]"
       echo " "
 			echo "options:"
 			echo " "
@@ -26,7 +26,7 @@ while test $# -gt 0; do
 			echo "I/O options:"
 			echo "-I, --fastq=PREFIX	   Prefix for input files."
       echo "                       Paired-end files require identical prefix and end with _R1.fastq.gz and _R2.fastq.gz"
-      echo "                       eg: Fly_R1.fastq.gz, Fly_R2.fastq.gz"
+      echo "                       eg: PREFIX_R1.fastq.gz, PREFIX_R2.fastq.gz"
 			echo "-T, --tmp=PATH         Path to a temporary storage directory."
       echo "-O, --output-dir=DIR   Specify a directory to store output in."
       echo " "
@@ -205,7 +205,7 @@ if [ -z "$CHINFO" ]; then
         echo " use bash proseq_PE.bsh --help."
         exit 1
 fi
-if [[ $FQ_INPUT == *.fastq.gz ]]; then
+if [[ "$FQ_INPUT" == "*.fastq.gz" ]]; then
   FQ_INPUT=`ls *.fastq.gz | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
 fi
 if [ -z "$FQ_INPUT" ]; then
@@ -290,6 +290,8 @@ do
     echo ""
     echo "##################################################################################"
     echo " File ${name}_R1.fastq.gz was not found! Skip ${name}*.fastq.gz from analysis."
+    echo " Paired-end files require identical prefix and end with _R1.fastq.gz and _R2.fastq.gz"
+    echo " eg: PREFIX_R1.fastq.gz, PREFIX_R2.fastq.gz"
     echo " Please make sure you have the correct file suffix!                           " 
     echo "##################################################################################"
     echo ""
@@ -297,6 +299,16 @@ do
   FQ_INPUT+=(${name})
   fi
 done
+
+if [[ ${#FQ_INPUT[@]} == 0 ]]; then
+  echo "##################################################################################"
+  echo " No files is in the correct format."
+  echo " Paired-end files require identical prefix and end with _R1.fastq.gz and _R2.fastq.gz"
+  echo " eg: PREFIX_R1.fastq.gz, PREFIX_R2.fastq.gz"
+  echo " Please make sure you have the correct file suffix! Aborting."
+  echo "##################################################################################"
+  exit 1
+fi
 
 # bash generate random 32 character alphanumeric string (upper and lowercase).
 TMPDIR=$TMPDIR/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -332,7 +344,7 @@ echo "number of threads         $thread"
 
 
 ## Exits .. for debugging.
-exit 1
+#exit 1
 
 ## DOIT!
 mkdir ${TMPDIR}

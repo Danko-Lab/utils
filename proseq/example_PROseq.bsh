@@ -10,4 +10,4 @@ export dog_genome=/local/storage/data/short_read_index/canFam3/bwa.rRNA-0.7.8-r4
 export dog_chinfo=/local/storage/data/canFam3/canFam3.chromInfo
 
 mkdir My_output_dir
-bash proseqMapper.bsh -b6 -I \*.fastq.gz -i $mouse_genome -c $mouse_chinfo -T ./My_output_dir/ -O ./My_output_dir/
+bash proseqMapper.bsh -b6 -I \*.fastq.gz -i $mouse_genome -c $mouse_chinfo -T /workdir/ -O ./My_output_dir/

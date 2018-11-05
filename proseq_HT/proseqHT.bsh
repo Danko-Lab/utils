@@ -162,7 +162,11 @@ else
 fi
 
 # bash generate random 32 character alphanumeric string (upper and lowercase).
-TMPDIR=$TMPDIR/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+tmp=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+TMPDIR=$TMPDIR/$tmp
+
+exec > >(tee ${OUTPUT}/proseq_HT_Run_${tmp}.log)
+exec 2>&1
 
 ## Print out
 echo " " 

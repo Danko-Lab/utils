@@ -232,8 +232,8 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
 
 wait
 ## Cleanup.
-rm ${TMPDIR}/noadapt/*.fastq
-rm ${TMPDIR}/nodups/*.fastq
+gzip ${TMPDIR}/noadapt/*.fastq
+gzip ${TMPDIR}/nodups/*.fastq
 
 #############################################
 ## Align reads.

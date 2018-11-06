@@ -102,9 +102,13 @@ while True:
 
 				else:
 					discard += 1
+                    fastq1['NODEX'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+                    fastq2['NODEX'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
 
 			except (KeyError, ValueError) as e:
 				discard +=1
+                fastq1['NODEX'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+                fastq2['NODEX'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
 				continue
 
 

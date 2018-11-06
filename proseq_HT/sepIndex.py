@@ -14,7 +14,7 @@ print "Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2
 print "Output prefix: " + out_prefix
 
 ## http://stackoverflow.com/questions/29550290/how-to-open-a-list-of-files-in-python
-idxids    = ['ATGCA', 'TCGTA', 'CGATA', 'GACGA', 'GCACA', 'TGCAA', 'CATGA', 'GTCAA', 'AGTCA', 'TACTA', 'CTAGA', 'GCTGA']
+idxids    = ['ATGCA', 'TCGTA', 'CGATA', 'GACGA', 'GCACA', 'TGCAA', 'CATGA', 'GTCAA', 'AGTCA', 'TACTA', 'CTAGA', 'GCTGA', 'NODEX']
 counts    = [0] * len(idxids)
 discard   = 0
 total     = 0
@@ -102,13 +102,13 @@ while True:
 
 				else:
 					discard += 1
-                    fastq1['NODEX'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
-                    fastq2['NODEX'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
+					fastq1['NODEX'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+					fastq2['NODEX'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
 
 			except (KeyError, ValueError) as e:
 				discard +=1
-                fastq1['NODEX'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
-                fastq2['NODEX'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
+				fastq1['NODEX'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+				fastq2['NODEX'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
 				continue
 
 

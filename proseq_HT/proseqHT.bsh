@@ -200,8 +200,8 @@ mkdir ${TMPDIR}/sep
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do
   ## Remove adapter, NNNN, JJJJAG, and low quality (q=20) base from 3prime end of reads. Keep read length >=15 after trimmming
-  cutadapt -a AGATCGGAAGAGCACACGTCTGAACTC -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R1.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R1.fastq ${name}_R1.fastq.gz &
-  cutadapt -a GATCGTCGGACTGTAGAACTCTGAACG -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R2.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R2.fastq ${name}_R2.fastq.gz &
+  cutadapt -a AGATCGGAAGAGCACACGTCTGAACTC -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R1.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R1.fastq ${name}_1.fastq.gz &
+  cutadapt -a GATCGTCGGACTGTAGAACTCTGAACG -e 0.10 --overlap 2 --output=${TMPDIR}/${name}_trim_R2.fastq --untrimmed-output=${TMPDIR}/${name}_untrim_R2.fastq ${name}_2.fastq.gz &
   wait
   # remove NNNN from the 3 prime end of R1
   cutadapt --cut -4 --minimum-length 15 ${TMPDIR}/${name}_trim_R1.fastq --output=${TMPDIR}/${name}_trim.4Nremoved_R1.fastq -q 20 &

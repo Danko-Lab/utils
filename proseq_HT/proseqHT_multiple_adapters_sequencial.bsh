@@ -216,13 +216,16 @@ wait
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do 
- cat ${TMPDIR}/${name}_trim1_R1.fastq ${TMPDIR}/${name}_trim2_R1.fastq > ${TMPDIR}/${name}_trim_R1.fastq &
- cat ${TMPDIR}/${name}_trim1_R2.fastq ${TMPDIR}/${name}_trim2_R2.fastq > ${TMPDIR}/${name}_trim_R2.fastq &
+ cat ${TMPDIR}/${name}_trim1_R1.fastq  >> ${TMPDIR}/${name}_trim2_R1.fastq &
+ cat ${TMPDIR}/${name}_trim1_R2.fastq  >> ${TMPDIR}/${name}_trim2_R2.fastq  &
  done
 wait
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do
+  rm  ${TMPDIR}/${name}_trim1_R1.fast  ${TMPDIR}/${name}_trim1_R2.fastq
+  mv ${TMPDIR}/${name}_trim2_R1.fastq  ${TMPDIR}/${name}_trim_R1.fastq
+  mv ${TMPDIR}/${name}_trim2_R2.fastq  ${TMPDIR}/${name}_trim_R2.fastq 
   # remove NNNN from the 3 prime end of R1
   cutadapt --cut -4 --minimum-length 15 ${TMPDIR}/${name}_trim_R1.fastq --output=${TMPDIR}/${name}_trim.4Nremoved_R1.fastq -q 20 | tee -a ${TMPDIR}/${name}_R1_trim.log 2>&1 &
   cutadapt --minimum-length 15 ${TMPDIR}/${name}_untrim_R1.fastq --output=${TMPDIR}/${name}_q20trim_R1.fastq -q 20 | tee -a ${TMPDIR}/${name}_R1_trim.log 2>&1 &
@@ -249,21 +252,37 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
   rm ${TMPDIR}/${name}_trim_R2.fastq ${TMPDIR}/${name}_untrim_R2.fastq ${TMPDIR}/${name}_q20trim_R2.fastq ${TMPDIR}/${name}_trim.10Nremoved_R2.fastq &
 done
 
-mkdir ${TMPDIR}/nodups/l20
-mkdir ${TMPDIR}/nodups/l20_nodup
+dedup_L=30
+mkdir ${TMPDIR}/nodups/l${dedup_L}
+mkdir ${TMPDIR}/nodups/l${dedup_L}_nodups
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do
- cat ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq | fastx_trimmer -Q33 -l 20 -o ${TMPDIR}/nodups/l20/${name}_noadapt_l20_R1.fastq &
- cat ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq | fastx_trimmer -Q33 -l 20 -o ${TMPDIR}/nodups/l20/${name}_noadapt_l20_R2.fastq &
+ cat ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq | fastx_trimmer -Q33 -l ${dedup_L} -o ${TMPDIR}/nodups/l${dedup_L}/${name}_noadapt_l${dedup_L}_R1.fastq &
+ cat ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq | fastx_trimmer -Q33 -l ${dedup_L} -o ${TMPDIR}/nodups/l${dedup_L}/${name}_noadapt_l${dedup_L}_R2.fastq &
 done
 wait
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do 
-   prinseq-lite.pl -fastq ${TMPDIR}/nodups/l20/${name}_noadapt_l20_R1.fastq -fastq2 ${TMPDIR}/nodups/l20/${name}_noadapt_l20_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/l20_nodups/${name}_dedup -min_len 15 2> ${TMPDIR}/nodups/l20_nodups/${name}.prinseq-pcrDups.gd & 
+   ## Collapse reads using prinseq-lite.pl. using only the first 20bp of R1 and R2
+   ## Remove PCR duplciates.
+   prinseq-lite.pl -fastq ${TMPDIR}/nodups/l${dedup_L}/${name}_noadapt_l${dedup_L}_R1.fastq -fastq2 ${TMPDIR}/nodups/l${dedup_L}/${name}_noadapt_l${dedup_L}_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup -min_len 15 2> ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}.prinseq-pcrDups.gd & 
    ## Collapse reads using prinseq-lite.pl.
    ## Remove PCR duplciates.
-   prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup -min_len 15 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd &
+   # prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup -min_len 15 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd &
+done
+wait
+
+for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
+ do 
+ cat ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup_1.fastq | awk '(NR%4==1){print substr($1,2)}' > ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup_l${dedup_L}.txt &
+done
+wait
+
+for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
+ do 
+ seqtk subseq ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup_l${dedup_L}.txt > ${TMPDIR}/nodups/${name}_dedup_1.fastq &
+ seqtk subseq ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup_l${dedup_L}.txt > ${TMPDIR}/nodups/${name}_dedup_2.fastq &
 done
 wait
 

@@ -280,7 +280,7 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
  cat ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup_1.fastq | awk '(NR%4==1){print substr($1,2)}' > ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup_l${dedup_L}.txt &
 done
 wait
-rm {TMPDIR}/nodups/l${dedup_L}_nodups/*.fastq  #*/
+rm ${TMPDIR}/nodups/l${dedup_L}_nodups/*[12].fastq  #*/
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do 
@@ -323,8 +323,8 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
  h2=`cat ${OUTPUT}/proseq_HT_QC_${tmp}.log| awk -v name=${name} '($1==name){print $2}' ` 
  h3=`cat ${OUTPUT}/proseq_HT_QC_${tmp}.log| awk -v name=${name} '($1==name){print $3}' ` 
  h4=`cat ${OUTPUT}/proseq_HT_QC_${tmp}.log| awk -v name=${name} '($1==name){print $4}' `
- tail -n 14 ${TMPDIR}/${name}_sep.log |head -n 13 | awk -v h2=${h2} -v h3=${h3} -v h4=${h4} -v name=${name} '{print name, h2, h3, h4, name, substr($1,1,5), name"_"substr($1,1,5), $2, $4}' >> ${OUTPUT}/proseq_HT_QC_${tmp}_spe_reads_counts.txt
- tail -n 1 ${TMPDIR}/${name}_sep.log | awk -v h2=${h2} -v h3=${h3} -v h4=${h4} -v name=${name} '{print name, h2, h3, h4, name, substr($1,1,5), name"_"substr($1,1,5), $3, $5}' >> ${OUTPUT}/proseq_HT_QC_${tmp}_spe_reads_counts.txt
+ tail -n 14 ${TMPDIR}/${name}_sep.log |head -n 13 | awk -v h2=${h2} -v h3=${h3} -v h4=${h4} -v name=${name} 'BEGIN{OFS="\t"} {print name, h2, h3, h4, name, substr($1,1,5), name"_"substr($1,1,5), $2, $4}' >> ${OUTPUT}/proseq_HT_QC_${tmp}_spe_reads_counts.txt
+ tail -n 1 ${TMPDIR}/${name}_sep.log | awk -v h2=${h2} -v h3=${h3} -v h4=${h4} -v name=${name} 'BEGIN{OFS="\t"} {print name, h2, h3, h4, name, substr($1,1,5), name"_"substr($1,1,5), $3, $5}' >> ${OUTPUT}/proseq_HT_QC_${tmp}_spe_reads_counts.txt
 
 done
 
@@ -390,6 +390,19 @@ for f in ${TMPDIR}/*.sort.bam
 
    rm ${TMPDIR}/$j.nr.rs.bed.gz ${TMPDIR}/$j.bed.gz ${TMPDIR}/$j*.bedGraph
  done
+
+rm ${OUTPUT}/temp
+for f in `ls ${OUTPUT}/*.align.log`
+do j=`echo $f |rev| cut -d / -f 1|rev| cut -d . -f 1`
+ cat $f | awk '(NR%2==1){print $1}' | paste - - - | tee -a ${OUTPUT}/temp
+done
+
+cat ${OUTPUT}/proseq_HT_QC_${tmp}_spe_reads_counts.txt | LC_ALL=C sort -k 1b,7 > ${OUTPUT}/temp1.sort
+cat ${OUTPUT}/temp | LC_ALL=C sort -k 1b,1 > ${OUTPUT}/temp2.sort
+join -e EMPTY -t $'\t' -a 1 -1 7 -2 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.2,2.3 ${OUTPUT}/temp1.sort ${OUTPUT}/temp2.sort > ${OUTPUT}/proseq_HT_${tmp}_QC_sep_mapped_reads_counts.txt
+
+rm ${OUTPUT}/temp ${OUTPUT}/temp1.sort ${OUTPUT}/temp2.sort 
+
 
 
 #############################################

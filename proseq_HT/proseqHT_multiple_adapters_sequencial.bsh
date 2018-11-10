@@ -216,6 +216,7 @@ wait
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do 
+ rm ${TMPDIR}/${name}_untrim1_R1.fastq ${TMPDIR}/${name}_untrim1_R2.fastq
  cat ${TMPDIR}/${name}_trim1_R1.fastq  >> ${TMPDIR}/${name}_trim2_R1.fastq &
  cat ${TMPDIR}/${name}_trim1_R2.fastq  >> ${TMPDIR}/${name}_trim2_R2.fastq  &
  done
@@ -223,7 +224,7 @@ wait
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do
-  rm  ${TMPDIR}/${name}_trim1_R1.fast  ${TMPDIR}/${name}_trim1_R2.fastq
+  rm  ${TMPDIR}/${name}_trim1_R1.fastq  ${TMPDIR}/${name}_trim1_R2.fastq
   mv ${TMPDIR}/${name}_trim2_R1.fastq  ${TMPDIR}/${name}_trim_R1.fastq
   mv ${TMPDIR}/${name}_trim2_R2.fastq  ${TMPDIR}/${name}_trim_R2.fastq 
   # remove NNNN from the 3 prime end of R1
@@ -272,12 +273,14 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
    # prinseq-lite.pl -fastq ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq -fastq2 ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq -derep 1 -out_format 3 -out_bad null -out_good ${TMPDIR}/nodups/${name}_dedup -min_len 15 2> ${OUTPUT}/${name}.prinseq-pcrDups.gd &
 done
 wait
+rm ${TMPDIR}/nodups/l${dedup_L}/*.fastq #*/
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do 
  cat ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup_1.fastq | awk '(NR%4==1){print substr($1,2)}' > ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup_l${dedup_L}.txt &
 done
 wait
+rm {TMPDIR}/nodups/l${dedup_L}_nodups/*.fastq  #*/
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do 
@@ -285,6 +288,7 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
  seqtk subseq ${TMPDIR}/noadapt/${name}_noadapt_R2.fastq ${TMPDIR}/nodups/l${dedup_L}_nodups/${name}_dedup_l${dedup_L}.txt > ${TMPDIR}/nodups/${name}_dedup_2.fastq &
 done
 wait
+rm ${TMPDIR}/nodups/l${dedup_L}_nodups/*.txt #*/
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do
@@ -294,9 +298,44 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
  done
 
 wait
+
+# reads count report
+echo "name" | tee ${OUTPUT}/proseq_HT_QC_${tmp}.log
+echo "RawR1ReadsCount" | tee -a ${OUTPUT}/proseq_HT_QC_${tmp}.log
+echo "noadapt_R1ReadsCount" | tee -a ${OUTPUT}/proseq_HT_QC_${tmp}.log
+echo "nodups_R1ReadsCount" | tee -a ${OUTPUT}/proseq_HT_QC_${tmp}.log
+
+for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
+ do
+echo ${name} | tee -a ${OUTPUT}/proseq_HT_QC_${tmp}.log
+zcat ${name}_R1.fastq.gz|  awk ' (NR%4==0){print $0}' | wc -l  | tee -a ${OUTPUT}/proseq_HT_QC_${tmp}.log
+cat ${TMPDIR}/noadapt/${name}_noadapt_R1.fastq |awk ' (NR%4==0){print $0}' | wc -l  | tee -a ${OUTPUT}/proseq_HT_QC_${tmp}.log
+cat ${TMPDIR}/nodups/${name}_dedup_1.fastq | awk ' (NR%4==0){print $0}' | wc -l  | tee -a ${OUTPUT}/proseq_HT_QC_${tmp}.log
+done
+
+mv ${OUTPUT}/proseq_HT_QC_${tmp}.log ${OUTPUT}/proseq_HT_QC_${tmp}.log_temp
+cat ${OUTPUT}/proseq_HT_QC_${tmp}.log_temp | paste - - - - > ${OUTPUT}/proseq_HT_QC_${tmp}.log
+rm ${OUTPUT}/proseq_HT_QC_${tmp}.log_temp
+
+for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
+ do   
+ h=`cat ${OUTPUT}/proseq_HT_QC_${tmp}.log| awk -v name=${name} '($1==name){print $0}' ` 
+ h2=`cat ${OUTPUT}/proseq_HT_QC_${tmp}.log| awk -v name=${name} '($1==name){print $2}' ` 
+ h3=`cat ${OUTPUT}/proseq_HT_QC_${tmp}.log| awk -v name=${name} '($1==name){print $3}' ` 
+ h4=`cat ${OUTPUT}/proseq_HT_QC_${tmp}.log| awk -v name=${name} '($1==name){print $4}' `
+ tail -n 14 ${TMPDIR}/${name}_sep.log |head -n 13 | awk -v h2=${h2} -v h3=${h3} -v h4=${h4} -v name=${name} '{print name, h2, h3, h4, name, substr($1,1,5), name"_"substr($1,1,5), $2, $4}' >> ${OUTPUT}/proseq_HT_QC_${tmp}_spe_reads_counts.txt
+ tail -n 1 ${TMPDIR}/${name}_sep.log | awk -v h2=${h2} -v h3=${h3} -v h4=${h4} -v name=${name} '{print name, h2, h3, h4, name, substr($1,1,5), name"_"substr($1,1,5), $3, $5}' >> ${OUTPUT}/proseq_HT_QC_${tmp}_spe_reads_counts.txt
+
+done
+
 ## Cleanup.
-gzip -r ${TMPDIR}/noadapt
-gzip -r ${TMPDIR}/nodups
+for f in ${TMPDIR}/noadapt/*.fastq #*/
+  do gzip $f &
+done
+for f in ${TMPDIR}/nodups/*.fastq #*/
+  do gzip $f &
+done
+
 
 #############################################
 ## Align reads.

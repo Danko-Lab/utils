@@ -100,6 +100,12 @@ while True:
 					fileidx = idxids.index('ATGCA')
 					counts[fileidx] += 1
 
+				elif obs_idx == 'GACGT':
+					fastq1['GACGA'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])
+					fastq2['GACGA'].write(r2_name+r2_seq[trimRight:]+r2_plus+r2_qual[trimRight:])
+					fileidx = idxids.index('GACGA')
+					counts[fileidx] += 1
+
 				else:
 					discard += 1
 					fastq1['NODEX'].write(r1_name+r1_seq[trimLeft:]+r1_plus+r1_qual[trimLeft:])

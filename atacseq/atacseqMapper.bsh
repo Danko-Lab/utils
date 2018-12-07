@@ -26,10 +26,33 @@ for name in $NAMES
   ## Make a BAM file for peak calling in MACS.  Criteria: Sorted, MAPQ >= 10, exclude potential PCR duplicates.
   samtools sort ${scratch}/${name}.tmp.bam | samtools rmdup -S ${scratch}/${name}.tmp.bam - | samtools view -bf 0x2 -q 10 - > ${scratch}/${name}.bam
 
+  ## Make stranded output files
+   bedtools bamtobed -i ${scratch}/${name}.bam | awk 'BEGIN{OFS="\t"} ($5 > 20){print $0}' | \
+        awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$2,$2+1,$4,$5,$6}; ($6 == "-") {print $1,$3-1,$3,$4,$5,$6}' | gzip > ${scratch}/${name}.bed.gz
+ 
+  ## Convert to bedGraph 
+   bedtools genomecov -bg -i ${scratch}/${name}.nr.rs.bed.gz -g ${CHINFO} -strand + > ${scratch}/$j\_plus.bedGraph
+   bedtools genomecov -bg -i ${scratch}/${name}.nr.rs.bed.gz -g ${CHINFO} -strand - > ${scratch}/$j\_minus.noinv.bedGraph
+
+   ## Invert minus strand.
+   cat ${scratch}/${name}_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${scratch}/${name}_minus.bedGraph ## Invert read counts on the minus strand.
+
+
+   ## sort
+   LC_COLLATE=C sort -k1,1 -k2,2n ${scratch}/${name}_plus.bedGraph \
+   > ${scratch}/${name}_plus.sorted.bedGraph
+   LC_COLLATE=C sort -k1,1 -k2,2n ${scratch}/${name}_minus.bedGraph \
+   > ${scratch}/${name}_minus.sorted.bedGraph
+
+   ## Then to bigWig
+   bedGraphToBigWig ${scratch}/${name}_plus.sorted.bedGraph ${CHINFO} ${OUTPUT}/${name}_plus.bw
+   bedGraphToBigWig ${scratch}/${name}_minus.sorted.bedGraph ${CHINFO} ${OUTPUT}/${name}_minus.bw
+
+   
   ## Call peaks with MACS2
   cd ${scratch}
   macs2 callpeak -t ${name}.bam -f BAMPE -g hs -n ${name} -B -q 0.01
-  bedGraphToBigWig ${name}_treat_pileup.bdg ${chromInfo} ${name}.bw
+  #bedGraphToBigWig ${name}_treat_pileup.bdg ${chromInfo} ${name}.bw
   bgzip ${name}_peaks.narrowPeak
   tabix -p bed ${name}_peaks.narrowPeak.gz
 

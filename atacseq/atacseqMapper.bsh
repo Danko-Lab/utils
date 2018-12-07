@@ -52,7 +52,7 @@ for name in $NAMES
   ## Call peaks with MACS2
   cd ${scratch}
   macs2 callpeak -t ${name}.bam -f BAMPE -g hs -n ${name} -B -q 0.01
-  #bedGraphToBigWig ${name}_treat_pileup.bdg ${chromInfo} ${name}.bw
+  bedGraphToBigWig ${name}_treat_pileup.bdg ${chromInfo} ${name}.bw
   bgzip ${name}_peaks.narrowPeak
   tabix -p bed ${name}_peaks.narrowPeak.gz
 

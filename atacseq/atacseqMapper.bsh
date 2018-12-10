@@ -37,11 +37,16 @@ for name in $NAMES
    ## Invert minus strand.
    cat ${scratch}/${name}_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${scratch}/${name}_minus.bedGraph ## Invert read counts on the minus strand.
 
-
+   ##invert minus and shift reads 
+   cat ${scratch}/${name}_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2-5,$3-5,-1*$4}' > ${scratch}/${name}\_minus_shift.bedGraph ## Invert read counts on the minus strand.
+		
+   #shift plus reads
+   cat ${scratch}/${name}_plus.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2+4,$3+4,$4}' > ${scratch}/${name}_plus_shift.bedGraph ## Invert read counts on the minus strand.
+   
    ## sort
-   LC_COLLATE=C sort -k1,1 -k2,2n ${scratch}/${name}_plus.bedGraph \
+   LC_COLLATE=C sort -k1,1 -k2,2n ${scratch}/${name}_plus_shifted.bedGraph \
    > ${scratch}/${name}_plus.sorted.bedGraph
-   LC_COLLATE=C sort -k1,1 -k2,2n ${scratch}/${name}_minus.bedGraph \
+   LC_COLLATE=C sort -k1,1 -k2,2n ${scratch}/${name}_minus_shifted.bedGraph \
    > ${scratch}/${name}_minus.sorted.bedGraph
 
    ## Then to bigWig

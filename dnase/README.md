@@ -12,7 +12,7 @@ Please make sure you can call the bioinformatics tools from your current working
 
 ## Usage
 
-'''
+```
 Takes bam files from DNase-I-seq data as input and writes bigWig files as output to the user-assigned output-dir.
     
 Requirements in current working directory:
@@ -38,4 +38,4 @@ I/O options:
     
 Optional operations:
 --thread=1         Number of threads can be used [default: 1]
-'''
+```

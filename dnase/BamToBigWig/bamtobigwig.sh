@@ -223,7 +223,7 @@ if [[ "$SEQ" == "SE" ]] ; then
    bedtools genomecov -bg -i  ${TMPDIR}/$j.bed.gz -g ${CHINFO} -strand - > ${TMPDIR}/$j\_minus.noinv.bedGraph
    
 
-   ## Invert minus strand and shift reads.
+   ## Invert minus strand.
    cat ${TMPDIR}/$j\_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4}' > ${TMPDIR}/$j\_minus.bedGraph 
 
    ## Then to bigWig
@@ -249,7 +249,7 @@ elif [[ "$SEQ" == "PE" ]] ; then
    bedtools genomecov -bg -i  ${TMPDIR}/$j.bed.gz -g ${CHINFO} -strand - > ${TMPDIR}/$j\_minus.noinv.bedGraph
    
 
-   ## Invert minus strand and shift reads.
+   ## Invert minus strand.
    cat ${TMPDIR}/$j\_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4}' > ${TMPDIR}/$j\_minus.bedGraph 
 
    ## Then to bigWig

@@ -165,7 +165,7 @@ fi
 tmp=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
 TMPDIR=$TMPDIR/$tmp
 
-exec > >(tee -a ${OUTPUT}/proseq_HT_Run_${tmp}.log)
+exec > >(tee ${OUTPUT}/proseq_HT_Run_${tmp}.log)
 exec 2>&1
 
 ## Print out

@@ -270,7 +270,7 @@ for name in `ls ${TMPDIR}/sep/*.fastq.gz | awk -F"/" '{print $NF}' | rev | cut -
   #bwa aln ref.fa short_read.fq > aln_sa.sai
   bwa aln -t 32 ${BWAIDX} ${TMPDIR}/sep/${name}_SeqPrepMerged.fastq.gz > ${TMPDIR}/${name}_SeqPrepMerged.bwa_aln.sai
   #bwa samse ref.fa aln_sa.sai short_read.fq > aln-se.sam
-  bwa samse ${BWAIDX} ${TMPDIR}/${name}_SeqPrepMerged.bwa_aln.sai ${TMPDIR}/sep/${name}_SeqPrepMerged.fastq.gz | \
+  bwa samse -n 1 ${BWAIDX} ${TMPDIR}/${name}_SeqPrepMerged.bwa_aln.sai ${TMPDIR}/sep/${name}_SeqPrepMerged.fastq.gz | \
   samtools view -b -q 10 - | samtools sort -n -@ 32 - > ${TMPDIR}/${name}_SeqPrepMerged.sort.bam &
   
  done

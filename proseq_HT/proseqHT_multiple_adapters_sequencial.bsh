@@ -196,6 +196,7 @@ echo "Preprocessing fastq files:"
 mkdir ${TMPDIR}/noadapt
 mkdir ${TMPDIR}/nodups
 mkdir ${TMPDIR}/sep
+unset PYTHONPATH
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
  do

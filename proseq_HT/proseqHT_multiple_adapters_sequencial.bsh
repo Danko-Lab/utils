@@ -335,13 +335,15 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
 done
 
 ## Cleanup.
-for f in ${TMPDIR}/noadapt/*.fastq #*/
-  do gzip $f &
-done
-for f in ${TMPDIR}/nodups/*.fastq #*/
-  do gzip $f &
-done
+#for f in ${TMPDIR}/noadapt/*.fastq #*/
+#  do gzip $f &
+#done
+#for f in ${TMPDIR}/nodups/*.fastq #*/
+#  do gzip $f &
+#done
 
+rm ${TMPDIR}/noadapt
+rm ${TMPDIR}/nodups
 
 #############################################
 ## Align reads.

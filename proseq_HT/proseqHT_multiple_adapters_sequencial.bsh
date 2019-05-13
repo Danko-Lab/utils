@@ -165,6 +165,11 @@ fi
 tmp=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
 TMPDIR=$TMPDIR/$tmp
 
+## Check all the bioinformatics tools can be called from current working directory.
+for tool in cutadapt fastx_trimmer seqtk prinseq-lite.pl bwa samtools bedtools bedGraphToBigWig sort-bed
+do command -v ${tool} >/dev/null 2>&1 || { echo >&2 ${tool}" is required. Please make sure you can call the bioinformatics tools from your current working directoryb.  Aborting."; exit 1; }
+done
+
 exec > >(tee -a ${OUTPUT}/proseq_HT_Run_${tmp}.log)
 exec 2>&1
 

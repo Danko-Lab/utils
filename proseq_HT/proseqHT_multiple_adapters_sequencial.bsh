@@ -344,6 +344,7 @@ echo "Mapping reads:"
 for name in `ls ${TMPDIR}/sep/*.fastq.gz | awk -F"/" '{print $NF}' | rev | cut -d \. -f 2- | cut -d _ -f2- | rev| sort | uniq`
  do
   ## Align using BWA.
+  echo ${name}
   bwa mem -k 19 -t 32 ${BWAIDX} ${TMPDIR}/sep/${name}_R1.fastq.gz ${TMPDIR}/sep/${name}_R2.fastq.gz | \
 	samtools view -bf 0x2 -q 10 - | samtools sort -n -@ 32 - > ${TMPDIR}/${name}.sort.bam
 		
@@ -399,7 +400,7 @@ done
 
 cat ${OUTPUT}/proseq_HT_QC_${tmp}_spe_reads_counts.txt | LC_ALL=C sort -k 1b,7 > ${OUTPUT}/temp1.sort
 cat ${OUTPUT}/temp | LC_ALL=C sort -k 1b,1 > ${OUTPUT}/temp2.sort
-join -e EMPTY -t $'\t' -a 1 -1 7 -2 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.2,2.3 ${OUTPUT}/temp1.sort ${OUTPUT}/temp2.sort > ${OUTPUT}/proseq_HT_${tmp}_QC_sep_mapped_reads_counts.txt
+LC_ALL=C join -e EMPTY -t $'\t' -a 1 -1 7 -2 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.2,2.3 ${OUTPUT}/temp1.sort ${OUTPUT}/temp2.sort > ${OUTPUT}/proseq_HT_${tmp}_QC_sep_mapped_reads_counts.txt
 
 rm ${OUTPUT}/temp ${OUTPUT}/temp1.sort ${OUTPUT}/temp2.sort 
 

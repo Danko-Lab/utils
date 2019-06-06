@@ -18,7 +18,7 @@ Takes bam files from DNase-I-seq data as input and writes bigWig files as output
 Requirements in current working directory:
 samtools, bedtools, and bedGraphToBigWig.
     
-bash RunOnBamToBigWig.bsh [options]
+bash bamtobigwig_dnase.sh [options]
     
 options:
     

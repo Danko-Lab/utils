@@ -64,7 +64,7 @@ fi
 if [ -z "$OUTPUT" ]; then
         echo "No output path specified.  Using ./My_proseqHT_output_dir-date"
         now=$(date +"%m_%d_%Y")
-        OUTPUT=./My_proseqHT_output_dir-${now}
+        OUTPUT=./JJJJ-split-${now}
 fi
 if [ ! -d $OUTPUT ]; then
   mkdir $OUTPUT

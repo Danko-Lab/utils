@@ -70,10 +70,6 @@ if [ ! -d $OUTPUT ]; then
   mkdir $OUTPUT
 fi
 
-# bash generate random 32 character alphanumeric string (upper and lowercase).
-tmp=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
-TMPDIR=$tmp
-
 exec > >(tee ${OUTPUT}/demultiplex_${tmp}.log)
 exec 2>&1
 
@@ -88,9 +84,6 @@ echo "output-dir                $OUTPUT"
 ## Exits .. for debugging.
 #exit 1
 
-## DOIT!
-mkdir ${TMPDIR}
-
 ## Separate fq files into separate index files.
 
 for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
@@ -101,6 +94,6 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
  done
 
 ## Cleanup. Delete all files <1 MB.
-find ${TMPDIR} -name "*.fastq" -size -1024k -delete
+find ${OUTPUT} -name "*.fastq" -size -1024k -delete
 
 

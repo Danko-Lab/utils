@@ -1,0 +1,106 @@
+#!/usr/bin/bash
+#
+while test $# -gt 0; do
+        case "$1" in
+                -h|--help)
+			echo ""
+			echo "Splits PRO-seq data based on the JJJJ barcode."
+			echo ""
+			echo "Takes *.fastq.gz in the current working directory as input and writes"
+			echo "fastq files to the seleted output directory."
+			echo ""
+                        echo "bash sepIndex.bsh [options] [files]"
+                        echo " "
+			echo "options:"
+			echo " "
+                        echo "To get help:"
+                        echo "-h, --help                show this brief help menu."
+			echo " "
+			echo "I/O options:"
+			echo "-I, --fastq=PREFIX	Prefix for input files."
+                        echo "-O, --output-dir=DIR      specify a directory to store output in."
+			echo " "
+                        exit 0
+                        ;;
+                -I)
+                        shift
+                        if test $# -gt 0; then
+                                export FQ_INPUT=$1
+                        else
+                                echo "no input prefix specified."
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --fastq*)
+                        export FQ_INPUT=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                -O)
+                        shift
+                        if test $# -gt 0; then
+                                export OUTPUT=$1
+                        else
+                                echo "no output dir specified."
+                                exit 1
+                        fi
+                        shift
+                        ;;
+                --output-dir*)
+                        export OUTPUT=`echo $1 | sed -e 's/^[^=]*=//g'`
+                        shift
+                        ;;
+                *)
+                        break
+                        ;;
+        esac
+done
+
+## CHECK ARGUMENTS.
+if [ -z "$FQ_INPUT" ]; then
+	echo "No input files specified.  Using *.fastq.gz"
+	FQ_INPUT="*.fastq.gz"
+fi
+if [ -z "$OUTPUT" ]; then
+        echo "No output path specified.  Using ./My_proseqHT_output_dir-date"
+        now=$(date +"%m_%d_%Y")
+        OUTPUT=./My_proseqHT_output_dir-${now}
+fi
+if [ ! -d $OUTPUT ]; then
+  mkdir $OUTPUT
+fi
+
+# bash generate random 32 character alphanumeric string (upper and lowercase).
+tmp=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+TMPDIR=$tmp
+
+exec > >(tee ${OUTPUT}/demultiplex_${tmp}.log)
+exec 2>&1
+
+## Print out
+echo " " 
+echo "Processing PRO-seq data ..." 
+echo " "
+echo "Input files/ paths:"
+echo "input prefix              $FQ_INPUT"
+echo "output-dir                $OUTPUT"
+
+## Exits .. for debugging.
+#exit 1
+
+## DOIT!
+mkdir ${TMPDIR}
+
+## Separate fq files into separate index files.
+
+for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut -d _ -f 2- |rev | sort | uniq`
+ do
+   ## Separate into distinct fastq files.  Also trims off specified lengths of sequence.
+   # use the sepIndex.py without Trims 3-prime UMI and J-barcode 
+   python sepIndex.py ${name}_1.fastq ${name}_2.fastq ${name} | tee ${TMPDIR}/${name}_sep.log &
+ done
+
+## Cleanup. Delete all files <1 MB.
+find ${TMPDIR} -name "*.fastq" -size -1024k -delete
+
+

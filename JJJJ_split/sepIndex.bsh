@@ -90,11 +90,12 @@ for name in `ls $FQ_INPUT | awk -F"/" '{print $NF}' | rev | cut -d \. -f 3-| cut
  do
    ## Separate into distinct fastq files.  Also trims off specified lengths of sequence.
    # use the sepIndex.py without Trims 3-prime UMI and J-barcode 
-   gunzip ${name}_1.fq ${name}_2.fq
-   python sepIndex.py ${name}_1.fq ${name}_2.fq ${name} | tee ${TMPDIR}/${name}_sep.log &
+   gunzip ${name}_R1.fastq.gz ${name}_R2.fastq.gz
+   python sepIndex.py ${name}_R1.fastq ${name}_R2.fastq ${OUTPUT}/${name} | tee ${OUTPUT}/${name}_sep.log
+   gzip ${name}_R1.fastq ${name}_R2.fastq
  done
 
 ## Cleanup. Delete all files <1 MB.
-find ${OUTPUT} -name "*.fastq" -size -1024k -delete
+find ${OUTPUT} -name "*.fastq.gz" -size -1024k -delete
 
 

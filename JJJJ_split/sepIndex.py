@@ -9,9 +9,9 @@ in_fastq_R1 = sys.argv[1]
 in_fastq_R2 = sys.argv[2]
 out_prefix  = sys.argv[3]
 
-print "Separating distinct index fastq files."
-print "Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2
-print "Output prefix: " + out_prefix
+print("Separating distinct index fastq files.")
+print("Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2)
+print("Output prefix: " + out_prefix)
 
 ## http://stackoverflow.com/questions/29550290/how-to-open-a-list-of-files-in-python
 idxids    = ['ATGCA', 'TCGTA', 'CGATA', 'GACGA', 'GCACA', 'TGCAA', 'CATGA', 'GTCAA', 'AGTCA', 'TACTA', 'CTAGA', 'GCTGA', 'NODEX']
@@ -24,8 +24,8 @@ i1        = 4 ## Indices of barcode
 i2        = 9
 
 ## Open input fastq files.
-fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'wb') for idx in idxids}
-fastq2 = {idx: gzip.open(out_prefix+'_'+idx+'_R2.fastq.gz', 'wb') for idx in idxids}
+fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'w') for idx in idxids}
+fastq2 = {idx: gzip.open(out_prefix+'_'+idx+'_R2.fastq.gz', 'w') for idx in idxids}
 
 ## Read through the fastq file.
 r1=open(in_fastq_R1)
@@ -127,14 +127,14 @@ for file in fastq1.values():
 for file in fastq2.values():
 	file.close()
 
-print "Distinct index fastq files are Separated from:"
-print "Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2
-print "Output prefix: " + out_prefix
+print("Distinct index fastq files are Separated from:")
+print("Fastq files:   " + in_fastq_R1 + " " + in_fastq_R2)
+print("Output prefix: " + out_prefix)
 
 ## Print debug information
 for i in range(len(counts)): 
-	print str(idxids[i]) + ": " + str(counts[i]) + " of " + str(total) + "(" + str(float(counts[i])/float(total)*100) + "%)."
+	print(str(idxids[i]) + ": " + str(counts[i]) + " of " + str(total) + "(" + str(float(counts[i])/float(total)*100) + "%).")
 
-print "No idex: " + str(discard) + " of " + str(total) + "(" + str(float(discard)/float(total)*100) + "%)."
+print("No idex: " + str(discard) + " of " + str(total) + "(" + str(float(discard)/float(total)*100) + "%).")
 
 

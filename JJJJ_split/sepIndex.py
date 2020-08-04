@@ -24,8 +24,8 @@ i1        = 4 ## Indices of barcode
 i2        = 9
 
 ## Open input fastq files.
-fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'w') for idx in idxids}
-fastq2 = {idx: gzip.open(out_prefix+'_'+idx+'_R2.fastq.gz', 'w') for idx in idxids}
+fastq1 = {idx: gzip.open(out_prefix+'_'+idx+'_R1.fastq.gz', 'wt') for idx in idxids}
+fastq2 = {idx: gzip.open(out_prefix+'_'+idx+'_R2.fastq.gz', 'wt') for idx in idxids}
 
 ## Read through the fastq file.
 r1=open(in_fastq_R1)
